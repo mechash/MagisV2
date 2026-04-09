@@ -87,7 +87,7 @@ void onLoopFinish ( void ) { Oled_SystemMode(); }
 
 ## Documentation
 
-- [ELRS Integration Report](report/ELRS_Integration_Report.html) — engineering report with challenges, fixes, and architecture
+- [ELRS Integration Report](report/ELRS_Integration_Report.md) — engineering report with challenges, fixes, and architecture
 - [OLED API Wiki](docs/OLED_API_WIKI.md) — OLED display API reference
 
 ## Hardware
