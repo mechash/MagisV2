@@ -2,20 +2,19 @@
 #include "PlutoPilot.h"
 
 /**
- * Configures Pluto's receiver to use PPM or default ESP mode; activate the line matching your setup.
- * AUX channel configurations is only for PPM recievers if no custom configureMode function is called this are the default setup
+ * Configures Pluto's receiver mode.
+ * AUX channel configurations for ELRS:
  * ARM mode : Rx_AUX2, range 1300 to 2100
  * ANGLE mode : Rx_AUX2, range 900 to 2100
- * BARO mode : Rx_AUX3, range 1300 to 2100
- * MAG mode : Rx_AUX1, range 900 to 1300
- * HEADFREE mode : Rx_AUX1, range 1300 to 1700
+ * MAG mode : Rx_AUX3, range 1500 to 2100
  * DEV mode : Rx_AUX4, range 1500 to 2100
  */
 void plutoRxConfig ( void ) {
-  // Receiver mode: Uncomment one line for ESP or CAM or PPM setup.
-  Receiver_Mode ( Rx_ESP );    // Onboard ESP
+  // Receiver mode: Uncomment one line matching your setup.
+  // Receiver_Mode ( Rx_ESP );    // Onboard ESP
   // Receiver_Mode ( Rx_CAM );    // WiFi CAMERA
   // Receiver_Mode ( Rx_PPM );    // PPM based
+  Receiver_Mode ( Rx_ELRS );      // ExpressLRS (CRSF) on USART2
 }
 
 // The setup function is called once at Pluto's hardware startup

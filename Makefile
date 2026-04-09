@@ -11,12 +11,13 @@
 #  Created Date: Mon, 28th Apr 2025                                           #
 #  Brief:                                                                     #
 #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
-#  Last Modified: Tue, 29th Apr 2025                                          #
-#  Modified By: AJ                                                            #
+#  Last Modified: Fri, 4th Apr 2026                                           #
+#  Modified By: Omkar Dandekar (techsavvyomi)                                 #
 #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 #  HISTORY:                                                                   #
-#  Date      	By	Comments                                                    #
-#  ----------	---	---------------------------------------------------------   #
+#  Date      	By	Comments                                                  #
+#  ----------	---	--------------------------------------------------------- #
+#  2026-04-04	OD	Added rx/crsf.c to MAIN_RX for ELRS CRSF support          #
 ###############################################################################
 #
 # Makefile for building the MasigV2 firmware.
@@ -213,6 +214,7 @@ MAIN_RX = rx/rx.cpp \
 		   		rx/sumh.c \
 		   		rx/spektrum.c \
 		   		rx/xbus.cpp \
+		   		rx/crsf.c \
 
 MAIN_SENSOR = sensors/acceleration.cpp \
 		   				sensors/battery.cpp \

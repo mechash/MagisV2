@@ -8,12 +8,13 @@
  #  Created Date: Tue, 26th Jan 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Tue, 29th Apr 2025                                          #
- #  Modified By: AJ                                                            #
+ #  Last Modified: Fri, 4th Apr 2026                                           #
+ #  Modified By: Omkar Dandekar (techsavvyomi)                                  #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
  #  Date      	By	Comments                                                   #
  #  ----------	---	---------------------------------------------------------  #
+ #  2026-04-04	OD	Added Rx_ELRS (CRSF) and Rx_SBUS modes with USART1 config #
  *******************************************************************************/
 #include "platform.h"
 
@@ -142,6 +143,28 @@ void Receiver_Mode ( rx_mode_e rxMode ) {
       Receiver_Config_Mode_Dev ( Rx_AUX4, 1500, 2100 );
 
       ESP_WiFi_Status = true;
+      break;
+    }
+
+    case Rx_ELRS: {
+      AuxChangeEnable = true;
+      featureSet ( FEATURE_RX_SERIAL );
+      masterConfig.rxConfig.serialrx_provider = 7;    // SERIALRX_CRSF (ELRS)
+      masterConfig.serialConfig.portConfigs [ 1 ].functionMask = FUNCTION_RX_SERIAL;    // USART2 (Unibus port, PA2/PA3) for ELRS receiver
+
+      // CRSF range: 988..2012 — adjust validation bounds to accept full range
+      masterConfig.rxConfig.rx_min_usec = 885;
+      masterConfig.rxConfig.rx_max_usec = 2115;
+      masterConfig.rxConfig.mincheck    = 1050;    // throttle must be below this to arm
+      masterConfig.rxConfig.maxcheck    = 1900;
+
+      Receiver_Aux_Config ( Mode_ARM, Rx_AUX2, 1300, 2100 );
+      Receiver_Aux_Config ( Mode_ANGLE, Rx_AUX2, 900, 2100 );
+      Receiver_Aux_Config ( Mode_MAG, Rx_AUX3, 1500, 2100 );
+
+      Receiver_Config_Mode_Dev ( Rx_AUX4, 1500, 2100 );
+
+      ESP_WiFi_Status = true;    // ESP stays on — ELRS uses USART2, not USART1
       break;
     }
 

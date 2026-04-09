@@ -1,8 +1,73 @@
-# MagisV2 OLED API
+# MagisV2 — ELRS & OLED
+
+MagisV2 firmware for the PlutoX2 nano drone with **ExpressLRS (CRSF) receiver support** and a **revamped 128x64 OLED display API**.
+
+---
+
+## ELRS (ExpressLRS) Support
+
+### Overview
+
+ELRS integration adds CRSF protocol support on **USART2 (PA3)**, enabling control via any ELRS-compatible transmitter. ESP on USART1 remains available for development.
+
+### Wiring
+
+| ELRS Receiver | Primus X2 v1 |
+|---------------|--------------|
+| TX | PA3 (USART2 RX) |
+| VCC | 5V / 3.3V |
+| GND | GND |
+
+### Quick Start
+
+```cpp
+void plutoRxConfig ( void ) {
+  Receiver_Mode ( Rx_ELRS );
+}
+```
+
+### AUX Channel Assignment
+
+| Function | Channel | Range | Trigger |
+|----------|---------|-------|---------|
+| ARM + ANGLE | CH6 (AUX2) | 1300–2100 | Switch HIGH |
+| MAG Calibration | CH7 (AUX3) | 1500–2100 | Switch HIGH (optional) |
+| Developer Mode | CH8 (AUX4) | 1500–2100 | Switch HIGH |
+
+### Arming Sequence
+
+1. Power on, place drone flat
+2. Wait for gyro/accel calibration (LED stops blinking)
+3. Throttle stick fully down
+4. Flip CH6 (AUX2) HIGH → armed
+
+### CRSF Protocol Details
+
+| Parameter | Value |
+|-----------|-------|
+| Baud rate | 420,000 |
+| Format | 8N1, non-inverted |
+| Channels | 16 (11-bit packed) |
+| Raw range | 172–1811 |
+| RC range | 988–2012 |
+| Frame types | RC Channels (0x16), Link Stats (0x14) |
+
+### Receiver Modes Comparison
+
+| | Rx_ESP | Rx_PPM | Rx_ELRS |
+|---|--------|--------|---------|
+| UART | USART1 | PPM Pin | USART2 |
+| Protocol | MSP | PWM | CRSF |
+| MAG enforce | Yes | Yes | No (optional via switch) |
+| ESP available | No | Yes | Yes |
+
+---
+
+## OLED API
 
 128x64 monochrome OLED display API for the PlutoX2 nano drone.
 
-## Quick Start
+### Quick Start
 
 ```cpp
 void plutoInit ( void ) { Oled_Init(); }
@@ -19,33 +84,29 @@ void onLoopFinish ( void ) { Oled_SystemMode(); }
 
 No buffers. No memset. No mode switching. Just draw.
 
----
-
-## How It Works
+### How It Works
 
 **SYSTEM mode** (default) — firmware shows battery, attitude, RC data, flight status automatically. Just call `Oled_Init()` in `plutoInit()`.
 
 **USER mode** — you draw anything. Call `Oled_Begin()` at the start of your frame, draw with `Oled_*` functions, call `Oled_End()` to send to display. Call `Oled_SystemMode()` in `onLoopFinish()` to return to telemetry.
 
----
+### Simple API
 
-## Simple API
-
-### Frame
+#### Frame
 
 | Function | Description |
 |----------|-------------|
 | `Oled_Begin()` | Start frame (clears buffer, auto enters USER mode) |
 | `Oled_End()` | Send frame to display (only changed pixels) |
 
-### Text
+#### Text
 
 | Function | Description |
 |----------|-------------|
 | `Oled_Text(x, y, "string")` | Draw text. 6px/char, 7px tall. |
 | `Oled_Number(x, y, 123)` | Draw integer (handles negatives) |
 
-### Shapes
+#### Shapes
 
 | Function | Description |
 |----------|-------------|
@@ -59,7 +120,7 @@ No buffers. No memset. No mode switching. Just draw.
 | `Oled_CircleOutline(cx, cy, r)` | Circle border |
 | `Oled_Erase(x, y, w, h)` | Black out a region |
 
-### Eyes
+#### Eyes
 
 | Function | Description |
 |----------|-------------|
@@ -67,7 +128,7 @@ No buffers. No memset. No mode switching. Just draw.
 | `Oled_RoundEyes(pupilX, pupilY)` | Two round cartoon eyes |
 | `Oled_DeadEyes()` | Two X-shaped crash eyes |
 
-### HUD
+#### HUD
 
 | Function | Description |
 |----------|-------------|
@@ -75,7 +136,7 @@ No buffers. No memset. No mode switching. Just draw.
 | `Oled_PitchLine(pitch)` | Pitch indicator (-90 to +90 degrees) |
 | `Oled_RollLine(roll)` | Roll indicator (-90 to +90 degrees) |
 
-### Setup
+#### Setup
 
 | Function | Description |
 |----------|-------------|
@@ -84,18 +145,30 @@ No buffers. No memset. No mode switching. Just draw.
 | `Oled_IsUserMode()` | Returns true if you own the screen |
 | `Oled_IsSystemMode()` | Returns true if firmware owns the screen |
 
-### Constants
+### Examples
 
-| Constant | Value |
-|----------|-------|
-| `OLED_WIDTH` | 128 |
-| `OLED_HEIGHT` | 64 |
+#### ELRS Channel Monitor
 
----
+```cpp
+void plutoRxConfig ( void ) { Receiver_Mode ( Rx_ELRS ); }
+void plutoInit ( void ) { Oled_Init(); }
 
-## Examples
+void plutoLoop ( void ) {
+  Oled_Begin();
+  Oled_Text(4, 0, "ELRS MONITOR");
+  Oled_Joysticks(
+    RcData_Get(RC_THROTTLE), RcData_Get(RC_YAW),
+    RcData_Get(RC_ROLL), RcData_Get(RC_PITCH)
+  );
+  Oled_Text(0, 52, "ARM");  Oled_Number(20, 52, RcData_Get(RC_AUX2));
+  Oled_Text(68, 52, "DEV"); Oled_Number(88, 52, RcData_Get(RC_AUX4));
+  Oled_End();
+}
 
-### Robot Eyes That Track RC Sticks
+void onLoopFinish ( void ) { Oled_SystemMode(); }
+```
+
+#### Robot Eyes That Track RC Sticks
 
 ```cpp
 void plutoLoop ( void ) {
@@ -107,26 +180,7 @@ void plutoLoop ( void ) {
 }
 ```
 
-### Tall Eyes That React to Roll
-
-```cpp
-void plutoLoop ( void ) {
-  Oled_Begin();
-  int roll = Estimate_Get(Angle, AG_ROLL) / 10;
-  int fx = roll / 5;
-  if (fx >  8) fx =  8;
-  if (fx < -8) fx = -8;
-  int leftH  = 36 + fx;
-  int rightH = 36 - fx;
-  if (leftH  < 6) leftH  = 6;
-  if (rightH < 6) rightH = 6;
-  Oled_RoundRect(19, 32 - leftH/2, 38, leftH, 10);
-  Oled_RoundRect(69, 32 - rightH/2, 38, rightH, 10);
-  Oled_End();
-}
-```
-
-### Show Sensor Data
+#### Show Sensor Data
 
 ```cpp
 void plutoLoop ( void ) {
@@ -141,9 +195,7 @@ void plutoLoop ( void ) {
 }
 ```
 
----
-
-## Advanced API
+### Advanced API
 
 For users who need full control (custom buffers, erase individual pixels):
 
@@ -166,6 +218,7 @@ All `Oled_Draw*` / `Oled_Fill*` functions accept a framebuffer pointer, x/y coor
 
 - [OLED API Wiki](docs/OLED_API_WIKI.md) — test snippets for every function, full examples
 - [Oled.h](src/main/API/Oled.h) — complete API with doxygen `@param` hints
+- [ELRS Integration Report](report/ELRS_Integration_Report.html) — engineering report with challenges, fixes, and architecture
 
 ---
 
@@ -173,31 +226,35 @@ All `Oled_Draw*` / `Oled_Fill*` functions accept a framebuffer pointer, x/y coor
 
 | Property | Value |
 |----------|-------|
-| Display | SSD1306 128x64 monochrome OLED |
-| Interface | I2C @ 0x3C |
-| Pins | PB8 (SCL), PB9 (SDA) |
 | MCU | STM32F303xC (72 MHz, 40 KB RAM) |
-| RAM usage | ~2 KB (shadow buffer + simple buffer) |
-| Update rate | 5 Hz system, up to loop rate in USER mode |
+| Display | SSD1306 128x64 monochrome OLED (I2C @ 0x3C) |
+| ELRS Port | USART2 (PA3 RX) — 420,000 baud CRSF |
+| ESP Port | USART1 (PA9/PA10) — MSP protocol |
+| Target | PRIMUS_X2_v1 |
 
 ---
 
 ## File Structure
 
 ```
-src/main/API/Oled.h                      — Public API (Simple + Advanced)
-src/main/API-Src/Oled.cpp                — Implementation
-src/main/io/oled_display.c               — System telemetry display
+src/main/rx/crsf.c                      — CRSF protocol driver
+src/main/rx/crsf.h                      — CRSF header
+src/main/API/RxConfig.h                 — Receiver mode enum (ESP/PPM/CAM/ELRS)
+src/main/API-Src/RxConfig.cpp           — Receiver mode configuration
+src/main/API/Oled.h                     — OLED Public API (Simple + Advanced)
+src/main/API-Src/Oled.cpp               — OLED implementation
+src/main/io/oled_display.c              — System telemetry display
 src/main/drivers/display_ug2864hsweg01.c — SSD1306 hardware driver
-PlutoPilot.cpp                           — User code entry point
-docs/OLED_API_WIKI.md                    — Wiki with all test snippets
+PlutoPilot.cpp                          — User code entry point
+docs/OLED_API_WIKI.md                   — Wiki with all test snippets
+report/ELRS_Integration_Report.html     — Engineering report
 ```
 
 ---
 
 ## Credits
 
-- **Omkar Dandekar** — OLED API design, framebuffer engine, simple layer, boxy eyes
-- **Ashish Jaiswal (MechAsh)** — System telemetry display, SSD1306 driver integration
+- **Omkar Dandekar** — ELRS/CRSF integration, OLED API design, framebuffer engine
+- **Ashish Jaiswal (MechAsh)** — System telemetry display, SSD1306 driver, Serial-IO API
 - **Dharna Nar** — Original OledEyes reference design
 - **Drona Aviation** — MagisV2 firmware platform

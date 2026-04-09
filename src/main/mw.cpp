@@ -270,8 +270,13 @@ bool isCalibrating ( ) {
   // Note: compass calibration is handled completely differently, outside of the main loop, see f.CALIBRATE_MAG
 #ifdef MAG_ENFORCE
   // to check whether mag calibration is done, if not the don't arm
-  if ( masterConfig.magScale.raw [ 0 ] == 0 || masterConfig.magScale.raw [ 1 ] == 0 || masterConfig.magScale.raw [ 2 ] == 0 || !isMagCalibrated ) {
-    set_FSI ( Mag_Calibration );
+  // ELRS (CRSF): skip mag enforce — mag cal is optional, triggered via AUX3 switch
+  if ( masterConfig.rxConfig.serialrx_provider != SERIALRX_CRSF ) {
+    if ( masterConfig.magScale.raw [ 0 ] == 0 || masterConfig.magScale.raw [ 1 ] == 0 || masterConfig.magScale.raw [ 2 ] == 0 || !isMagCalibrated ) {
+      set_FSI ( Mag_Calibration );
+    } else {
+      reset_FSI ( Mag_Calibration );
+    }
   } else {
     reset_FSI ( Mag_Calibration );
   }
