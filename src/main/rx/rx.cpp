@@ -355,8 +355,7 @@ void updateRx(uint32_t currentTime)
             needRxSignalBefore = currentTime + DELAY_10_HZ;
         }
 
-
-
+        rc_connected = rxSignalReceived;
     }
 #endif
 
