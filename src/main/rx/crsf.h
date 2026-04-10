@@ -25,6 +25,7 @@ extern "C" {
 
 uint8_t crsfFrameStatus(void);
 bool crsfInit(rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig, rcReadRawDataPtr *callback);
+void crsfSetBatteryVoltage(uint16_t vBatRaw);
 
 #ifdef __cplusplus
 }

@@ -28,6 +28,9 @@
  * Link Statistics frame (type 0x14):
  *   Contains RSSI, SNR, link quality, TX power, etc.
  *
+ * Battery Sensor telemetry (type 0x08):
+ *   Sent from FC to ELRS RX after each RC frame, in the inter-frame gap.
+ *
  * Serial: 420000 baud, 8N1, non-inverted.
  */
 
@@ -53,6 +56,7 @@
 
 #define CRSF_FRAMETYPE_RC_CHANNELS_PACKED   0x16
 #define CRSF_FRAMETYPE_LINK_STATISTICS      0x14
+#define CRSF_FRAMETYPE_BATTERY_SENSOR       0x08
 
 /* CRSF channel value range */
 #define CRSF_CHANNEL_VALUE_MIN  172
@@ -91,6 +95,13 @@ static uint8_t crsfCrc8(const uint8_t *data, uint8_t len)
 /* Frame buffer */
 static uint8_t crsfFrame[CRSF_MAX_FRAME_SIZE];
 static bool crsfFrameDone = false;
+
+/* Serial port handle (shared RX + telemetry TX) */
+static serialPort_t *crsfPort = NULL;
+
+/* Battery telemetry voltage to send (set externally via crsfSetBatteryVoltage) */
+static uint16_t crsfBatteryVoltage = 0;
+static bool crsfTelemetryEnabled = false;
 
 /* Decoded channel data */
 static uint16_t crsfChannelData[CRSF_MAX_CHANNEL];
@@ -166,6 +177,37 @@ static void crsfUnpackChannels(const uint8_t *payload)
     crsfChannelData[15] = ((uint16_t)payload[20] >> 5 | ((uint16_t)payload[21] << 3)) & 0x07FF;
 }
 
+/*
+ * Send battery telemetry frame immediately (called only after a complete RC frame).
+ * This is safe because the ELRS RX expects telemetry in the gap after sending an RC frame.
+ */
+static void crsfSendBatteryFrame(void)
+{
+    if (!crsfPort || !crsfTelemetryEnabled) {
+        return;
+    }
+
+    uint16_t voltage = crsfBatteryVoltage;
+
+    uint8_t frame[12];
+    frame[0] = CRSF_SYNC_BYTE;                        /* sync byte 0xC8 */
+    frame[1] = 10;                                     /* frame length: type(1) + payload(8) + crc(1) */
+    frame[2] = CRSF_FRAMETYPE_BATTERY_SENSOR;          /* type 0x08 */
+    frame[3] = (voltage >> 8) & 0xFF;                  /* voltage high byte (deci-volts, big-endian) */
+    frame[4] = voltage & 0xFF;                         /* voltage low byte */
+    frame[5] = 0;                                      /* current high */
+    frame[6] = 0;                                      /* current low */
+    frame[7] = 0;                                      /* capacity [23:16] */
+    frame[8] = 0;                                      /* capacity [15:8] */
+    frame[9] = 0;                                      /* capacity [7:0] */
+    frame[10] = 0;                                     /* battery remaining % */
+    frame[11] = crsfCrc8(&frame[2], 9);                /* CRC over type + payload */
+
+    for (uint8_t i = 0; i < sizeof(frame); i++) {
+        serialWrite(crsfPort, frame[i]);
+    }
+}
+
 uint8_t crsfFrameStatus(void)
 {
     if (!crsfFrameDone) {
@@ -195,6 +237,10 @@ uint8_t crsfFrameStatus(void)
         case CRSF_FRAMETYPE_RC_CHANNELS_PACKED:
             /* Payload starts at byte 3, 22 bytes of channel data */
             crsfUnpackChannels(&crsfFrame[3]);
+
+            /* Send battery telemetry in the gap right after RC frame */
+            crsfSendBatteryFrame();
+
             return SERIAL_RX_FRAME_COMPLETE;
 
         case CRSF_FRAMETYPE_LINK_STATISTICS:
@@ -255,14 +301,25 @@ bool crsfInit(rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig, rcReadRa
         return false;
     }
 
-    serialPort_t *crsfPort = openSerialPort(
+    crsfPort = openSerialPort(
         portConfig->identifier,
         FUNCTION_RX_SERIAL,
         crsfDataReceive,
         CRSF_BAUDRATE,
-        MODE_RX,
+        MODE_RXTX,
         (portOptions_t)(SERIAL_NOT_INVERTED | SERIAL_STOPBITS_1 | SERIAL_PARITY_NO)
     );
 
     return crsfPort != NULL;
+}
+
+/*
+ * Update the battery voltage for CRSF telemetry.
+ * Called from main loop. The actual TX happens inside crsfFrameStatus()
+ * right after an RC frame is received (safe timing).
+ */
+void crsfSetBatteryVoltage(uint16_t vBatRaw)
+{
+    crsfBatteryVoltage = vBatRaw;
+    crsfTelemetryEnabled = true;
 }

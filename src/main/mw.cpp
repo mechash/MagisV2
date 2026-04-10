@@ -72,6 +72,7 @@
 
 #include "rx/rx.h"
 #include "rx/msp.h"
+#include "rx/crsf.h"
 
 #include "telemetry/telemetry.h"
 #include "blackbox/blackbox.h"
@@ -422,6 +423,11 @@ void annexCode ( void ) {
     // updateBatteryState ( vbatComp );
 
     BMS_Update ( currentTime, vbatLastServiced, ibatLastServiced, ARMING_FLAG ( ARMED ), rcData [ THROTTLE ] );
+  }
+
+  /* Update battery voltage for CRSF telemetry (TX happens safely after each RC frame) */
+  if ( feature ( FEATURE_RX_SERIAL ) && feature ( FEATURE_INA219_VBAT ) ) {
+    crsfSetBatteryVoltage ( vBatRaw );
   }
 
   beeperUpdate ( );    // call periodic beeper handler

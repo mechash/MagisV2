@@ -150,7 +150,8 @@ void Receiver_Mode ( rx_mode_e rxMode ) {
       AuxChangeEnable = true;
       featureSet ( FEATURE_RX_SERIAL );
       masterConfig.rxConfig.serialrx_provider = 7;    // SERIALRX_CRSF (ELRS)
-      masterConfig.serialConfig.portConfigs [ 1 ].functionMask = FUNCTION_RX_SERIAL;    // USART2 (Unibus port, PA2/PA3) for ELRS receiver
+      masterConfig.serialConfig.portConfigs [ 0 ].functionMask = FUNCTION_RX_SERIAL;    // USART1 (ESP port, PA9/PA10) for ELRS receiver
+      masterConfig.serialConfig.portConfigs [ 1 ].functionMask = FUNCTION_MSP;          // USART2 takes over MSP (required: at least 1 MSP port)
 
       // CRSF range: 988..2012 — adjust validation bounds to accept full range
       masterConfig.rxConfig.rx_min_usec = 885;
@@ -158,13 +159,13 @@ void Receiver_Mode ( rx_mode_e rxMode ) {
       masterConfig.rxConfig.mincheck    = 1050;    // throttle must be below this to arm
       masterConfig.rxConfig.maxcheck    = 1900;
 
-      Receiver_Aux_Config ( Mode_ARM, Rx_AUX2, 1300, 2100 );
-      Receiver_Aux_Config ( Mode_ANGLE, Rx_AUX2, 900, 2100 );
+      Receiver_Aux_Config ( Mode_ARM, Rx_AUX1, 1300, 2100 );
+      Receiver_Aux_Config ( Mode_ANGLE, Rx_AUX2, 1300, 2100 );
       Receiver_Aux_Config ( Mode_MAG, Rx_AUX3, 1500, 2100 );
 
       Receiver_Config_Mode_Dev ( Rx_AUX4, 1500, 2100 );
 
-      ESP_WiFi_Status = true;    // ESP stays on — ELRS uses USART2, not USART1
+      ESP_WiFi_Status = false;    // ESP must be off — ELRS uses USART1 (shared with ESP)
       break;
     }
 
