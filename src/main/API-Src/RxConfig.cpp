@@ -8,13 +8,14 @@
  #  Created Date: Tue, 26th Jan 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Fri, 4th Apr 2026                                           #
- #  Modified By: Omkar Dandekar (techsavvyomi)                                  #
+ #  Last Modified: Thu, 10th Apr 2026                                           #
+ #  Modified By: Omkar Dandekar (techsavvyomi)                                 #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
  #  Date      	By	Comments                                                   #
  #  ----------	---	---------------------------------------------------------  #
  #  2026-04-04	OD	Added Rx_ELRS (CRSF) and Rx_SBUS modes with USART1 config #
+ #  2026-04-10	OD	Separate ARM (AUX1) and ANGLE/ACRO (AUX2) for ELRS        #
  *******************************************************************************/
 #include "platform.h"
 
@@ -164,6 +165,8 @@ void Receiver_Mode ( rx_mode_e rxMode ) {
       Receiver_Aux_Config ( Mode_MAG, Rx_AUX3, 1500, 2100 );
 
       Receiver_Config_Mode_Dev ( Rx_AUX4, 1500, 2100 );
+
+      masterConfig.batteryConfig.BatteryCapacity = 800;    // 800 mAh for ELRS setup
 
       ESP_WiFi_Status = false;    // ESP must be off — ELRS uses USART1 (shared with ESP)
       break;

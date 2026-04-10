@@ -11,12 +11,13 @@
  #  Created Date: Wed, 31st Dec 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Sun, 1st Feb 2026                                           #
- #  Modified By: AJ                                                            #
+ #  Last Modified: Thu, 10th Apr 2026                                           #
+ #  Modified By: Omkar Dandekar (techsavvyomi)                                 #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
  #  Date      	By	Comments                                                   #
  #  ----------	---	---------------------------------------------------------  #
+ #  2026-04-10	OD	Added CRSF battery telemetry update in main loop           #
 *******************************************************************************/
 
 #include <stdbool.h>
@@ -425,9 +426,14 @@ void annexCode ( void ) {
     BMS_Update ( currentTime, vbatLastServiced, ibatLastServiced, ARMING_FLAG ( ARMED ), rcData [ THROTTLE ] );
   }
 
-  /* Update battery voltage for CRSF telemetry (TX happens safely after each RC frame) */
+  /* Update battery telemetry for CRSF (TX happens safely after each RC frame) */
   if ( feature ( FEATURE_RX_SERIAL ) && feature ( FEATURE_INA219_VBAT ) ) {
-    crsfSetBatteryVoltage ( vBatRaw );
+    crsfSetBatteryTelemetry (
+      vBatRaw,                            /* voltage: deci-volts (0.1V) */
+      mAmpRaw / 10,                       /* current: centiamps → deci-amps (0.1A) */
+      (uint32_t) mAhDrawn,                /* capacity used: mAh */
+      (uint8_t) soc_Fused                 /* remaining: battery % */
+    );
   }
 
   beeperUpdate ( );    // call periodic beeper handler

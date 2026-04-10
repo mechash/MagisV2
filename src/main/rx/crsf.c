@@ -1,35 +1,60 @@
-/*
- * This file is part of Cleanflight and Magis.
- *
- * Cleanflight and Magis are free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Cleanflight and Magis are distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
- */
+/*******************************************************************************
+ #  SPDX-License-Identifier: GPL-3.0-or-later                                  #
+ #  SPDX-FileCopyrightText: 2025 Cleanflight & Drona Aviation                  #
+ #  -------------------------------------------------------------------------  #
+ #  Copyright (c) 2025 Drona Aviation                                          #
+ #  All rights reserved.                                                       #
+ #  -------------------------------------------------------------------------  #
+ #  Author: Omkar Dandekar (techsavvyomi)                                      #
+ #  Project: MagisV2                                                           #
+ #  File: \src\main\rx\crsf.c                                                  #
+ #  Created Date: Sat, 22nd Feb 2025                                           #
+ #  Brief: CRSF protocol driver for ExpressLRS (ELRS) receivers with           #
+ #         battery telemetry TX support.                                        #
+ #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ #  Last Modified: Thu, 10th Apr 2026                                           #
+ #  Modified By: Omkar Dandekar (techsavvyomi)                                 #
+ #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ #  HISTORY:                                                                   #
+ #  Date      	By	Comments                                                   #
+ #  ----------	---	---------------------------------------------------------  #
+ #  2026-04-6	OD	Initial CRSF RX driver (channels + link stats)             #
+ #  2026-04-10	OD	Added battery telemetry TX (voltage, current, capacity)    #
+ #              	  	Telemetry synced to RC frame gap for safe half-duplex TX  #
+ *******************************************************************************/
 
 /*
  * CRSF protocol implementation for ExpressLRS (ELRS) receivers.
  *
+ * This driver handles both RX (RC channels from ELRS) and TX (telemetry back
+ * to the radio) on a shared half-duplex UART at 420,000 baud.
+ *
  * CRSF frame format:
  *   [device_addr] [frame_length] [type] [payload...] [crc8]
  *
- * RC Channels Packed frame (type 0x16):
- *   16 channels, 11 bits each, packed into 22 bytes payload.
- *   Channel range: 172..1811 maps to 988us..2012us.
+ * Supported frame types:
  *
- * Link Statistics frame (type 0x14):
- *   Contains RSSI, SNR, link quality, TX power, etc.
+ *   RX — RC Channels Packed (type 0x16):
+ *     16 channels, 11 bits each, packed into 22 bytes payload.
+ *     Channel range: 172..1811 maps to 988us..2012us.
  *
- * Battery Sensor telemetry (type 0x08):
- *   Sent from FC to ELRS RX after each RC frame, in the inter-frame gap.
+ *   RX — Link Statistics (type 0x14):
+ *     Contains RSSI, SNR, link quality, TX power, etc.
+ *
+ *   TX — Battery Sensor (type 0x08):
+ *     Sent from FC to ELRS RX immediately after each RC frame,
+ *     in the inter-frame gap, to avoid half-duplex UART collisions.
+ *     Payload (8 bytes, all big-endian):
+ *       [voltage_H] [voltage_L]   — battery voltage in deci-volts (0.1V)
+ *       [current_H] [current_L]   — current draw in deci-amps (0.1A)
+ *       [cap_H] [cap_M] [cap_L]   — capacity used in mAh (24-bit)
+ *       [remaining]               — battery remaining percentage (0–100%)
+ *
+ *     EdgeTX/OpenTX sensors populated:
+ *       RxBt  — battery voltage
+ *       Curr  — current draw
+ *       Capa  — mAh consumed
+ *       Bat%  — remaining percentage
  *
  * Serial: 420000 baud, 8N1, non-inverted.
  */
@@ -99,8 +124,11 @@ static bool crsfFrameDone = false;
 /* Serial port handle (shared RX + telemetry TX) */
 static serialPort_t *crsfPort = NULL;
 
-/* Battery telemetry voltage to send (set externally via crsfSetBatteryVoltage) */
+/* Battery telemetry data (set externally via crsfSetBatteryTelemetry) */
 static uint16_t crsfBatteryVoltage = 0;
+static uint16_t crsfBatteryCurrent = 0;
+static uint32_t crsfBatteryCapacityUsed = 0;
+static uint8_t crsfBatteryRemaining = 0;
 static bool crsfTelemetryEnabled = false;
 
 /* Decoded channel data */
@@ -188,19 +216,22 @@ static void crsfSendBatteryFrame(void)
     }
 
     uint16_t voltage = crsfBatteryVoltage;
+    uint16_t current = crsfBatteryCurrent;
+    uint32_t capacity = crsfBatteryCapacityUsed;
+    uint8_t remaining = crsfBatteryRemaining;
 
     uint8_t frame[12];
     frame[0] = CRSF_SYNC_BYTE;                        /* sync byte 0xC8 */
     frame[1] = 10;                                     /* frame length: type(1) + payload(8) + crc(1) */
     frame[2] = CRSF_FRAMETYPE_BATTERY_SENSOR;          /* type 0x08 */
-    frame[3] = (voltage >> 8) & 0xFF;                  /* voltage high byte (deci-volts, big-endian) */
-    frame[4] = voltage & 0xFF;                         /* voltage low byte */
-    frame[5] = 0;                                      /* current high */
-    frame[6] = 0;                                      /* current low */
-    frame[7] = 0;                                      /* capacity [23:16] */
-    frame[8] = 0;                                      /* capacity [15:8] */
-    frame[9] = 0;                                      /* capacity [7:0] */
-    frame[10] = 0;                                     /* battery remaining % */
+    frame[3] = (voltage >> 8) & 0xFF;                  /* voltage high (deci-volts, big-endian) */
+    frame[4] = voltage & 0xFF;                         /* voltage low */
+    frame[5] = (current >> 8) & 0xFF;                  /* current high (deci-amps, big-endian) */
+    frame[6] = current & 0xFF;                         /* current low */
+    frame[7] = (capacity >> 16) & 0xFF;                /* capacity used [23:16] (mAh, big-endian) */
+    frame[8] = (capacity >> 8) & 0xFF;                 /* capacity used [15:8] */
+    frame[9] = capacity & 0xFF;                        /* capacity used [7:0] */
+    frame[10] = remaining;                             /* battery remaining % */
     frame[11] = crsfCrc8(&frame[2], 9);                /* CRC over type + payload */
 
     for (uint8_t i = 0; i < sizeof(frame); i++) {
@@ -314,12 +345,20 @@ bool crsfInit(rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig, rcReadRa
 }
 
 /*
- * Update the battery voltage for CRSF telemetry.
+ * Update battery telemetry data for CRSF.
  * Called from main loop. The actual TX happens inside crsfFrameStatus()
  * right after an RC frame is received (safe timing).
+ *
+ * voltage:  deci-volts (0.1V units, e.g. 42 = 4.2V)
+ * current:  deci-amps  (0.1A units, e.g. 15 = 1.5A)
+ * capacity: mAh drawn since power-on
+ * remaining: battery percentage (0–100)
  */
-void crsfSetBatteryVoltage(uint16_t vBatRaw)
+void crsfSetBatteryTelemetry(uint16_t voltage, uint16_t current, uint32_t capacity, uint8_t remaining)
 {
-    crsfBatteryVoltage = vBatRaw;
+    crsfBatteryVoltage = voltage;
+    crsfBatteryCurrent = current;
+    crsfBatteryCapacityUsed = capacity;
+    crsfBatteryRemaining = remaining;
     crsfTelemetryEnabled = true;
 }
