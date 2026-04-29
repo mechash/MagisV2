@@ -28,12 +28,13 @@ void plutoRxConfig ( void ) {
 
 ## AUX Channel Assignment
 
-| Function        | Channel    | Range      | Trigger                                          |
-| --------------- | ---------- | ---------- | ------------------------------------------------ |
-| ARM             | CH5 (AUX1) | 1300–2100 | 2-pos switch HIGH = armed                        |
-| ANGLE / ACRO    | CH6 (AUX2) | 1300–2100 | 3-pos switch: low = ACRO, mid+high = ANGLE       |
-| MAG             | CH7 (AUX3) | 1500–2100 | Switch HIGH (optional)                           |
-| Developer Mode  | CH8 (AUX4) | 1500–2100 | Switch HIGH                                      |
+| Function           | Channel    | Range      | Trigger                                          |
+| ------------------ | ---------- | ---------- | ------------------------------------------------ |
+| ARM                | CH5 (AUX1) | 1300–2100 | 2-pos switch HIGH = armed                        |
+| ANGLE / ACRO       | CH6 (AUX2) | 1300–2100 | 3-pos switch: low = ACRO, mid+high = ANGLE       |
+| MAG                | CH7 (AUX3) | 1500–2100 | Switch HIGH (optional)                           |
+| Developer Mode     | CH8 (AUX4) | 1500–2100 | Switch HIGH                                      |
+| THROTTLE / ALT HOLD| CH9 (AUX5) | 1500–2100 | 2-pos switch: low = THROTTLE, high = ALT HOLD    |
 
 ## Arming Sequence
 

@@ -16,6 +16,7 @@
  #  ----------	---	---------------------------------------------------------  #
  #  2026-04-04	OD	Added Rx_ELRS (CRSF) and Rx_SBUS modes with USART1 config #
  #  2026-04-10	OD	Separate ARM (AUX1) and ANGLE/ACRO (AUX2) for ELRS        #
+ #  2026-04-10	OD	Added ALT HOLD on AUX5 + 800mAh battery for ELRS          #
  *******************************************************************************/
 #include "platform.h"
 
@@ -163,6 +164,7 @@ void Receiver_Mode ( rx_mode_e rxMode ) {
       Receiver_Aux_Config ( Mode_ARM, Rx_AUX1, 1300, 2100 );
       Receiver_Aux_Config ( Mode_ANGLE, Rx_AUX2, 1300, 2100 );
       Receiver_Aux_Config ( Mode_MAG, Rx_AUX3, 1500, 2100 );
+      Receiver_Aux_Config ( Mode_BARO, Rx_AUX5, 1500, 2100 );    // AUX5: low = THROTTLE mode, high = ALT HOLD mode
 
       Receiver_Config_Mode_Dev ( Rx_AUX4, 1500, 2100 );
 
