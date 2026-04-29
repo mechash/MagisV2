@@ -1,46 +1,35 @@
 /*******************************************************************************
- *  Copyright (c) 2025 Drona Aviation
- *  All rights reserved.
- *  ---------------------------------------------------------------------------
- *  Author: Omkar Dandekar
- *  Project: MagisV2
- *  File: \src\main\API\Oled.cpp
- *  Created Date: Thu, 18th Dec 2025
- *  ---------------------------------------------------------------------------
- *  @brief
- *  OLED subsystem implementation for MagisV2.
- *
- *  This module implements the public OLED API defined in Oled.h.
- *
- *  Features:
- *   - SYSTEM mode: immediate text rendering for telemetry/debug UI
- *   - USER mode  : framebuffer-based graphics (eyes, HUDs, animations)
- *
- *  Design principles:
- *   - Non-blocking rendering
- *   - Deterministic execution
- *   - Diff-based OLED updates to minimize I2C bandwidth
- *   - Clear ownership separation between system firmware and user code
- *
- *  Ownership arbitration is controlled via the global `oledMode`.
- *
- *  ---------------------------------------------------------------------------
- *  HISTORY:
- *  Date        By              Comments
- *  ----------  --------------  ----------------------------------------------
- *  2025-12-18  Omkar Dandekar   Introduced unified OLED rendering layer with
- *                              SYSTEM / USER ownership, framebuffer drawing
- *                              primitives, expressive eye helpers, and
- *                              diff-based OLED update mechanism.
- ******************************************************************************/
-
-#include "API/Oled.h"
-#include "API/API-Utils.h"
-#include "drivers/display_ug2864hsweg01.h"
-#include "config/runtime_config.h"
+ #  SPDX-License-Identifier: GPL-3.0-or-later                                  #
+ #  SPDX-FileCopyrightText: 2025 Drona Aviation                                #
+ #  -------------------------------------------------------------------------  #
+ #  Copyright (c) 2025 Drona Aviation                                          #
+ #  All rights reserved.                                                       #
+ #  -------------------------------------------------------------------------  #
+ #  Author: Omkar Dandekar                                                     #
+ #  Project: MagisV2                                                           #
+ #  File: \src\main\API-Src\Oled.cpp                                           #
+ #  Created Date: Thu, 18th Dec 2025                                           #
+ #  Brief:                                                                     #
+ #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ #  Last Modified: Sun, 5th Apr 2026                                           #
+ #  Modified By: Omkar Dandekar                                                #
+ #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ #  HISTORY:                                                                   #
+ #  Date      	By	Comments                                                   #
+ #  ----------	---	---------------------------------------------------------  #
+*******************************************************************************/
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "platform.h"
+
+#include "API/Oled.h"
+#include "API/API-Utils.h"
+
+#include "drivers/display_ug2864hsweg01.h"
+
+#include "config/runtime_config.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,33 +1,23 @@
 /*******************************************************************************
- *  Copyright (c) 2025 Drona Aviation
- *  All rights reserved.
- *  ---------------------------------------------------------------------------
- *  Author: Omkar Dandekar
- *  Project: MagisV2
- *  File: \src\main\API\Oled.h
- *  Created Date: Thu, 18th Dec 2025
- *  ---------------------------------------------------------------------------
- *  @brief  OLED API for MagisV2 — 128x64 SSD1306 display over I2C.
- *
- *  Simple usage (recommended):
- *  @code
- *    void plutoInit() { Oled_Init(); }
- *    void plutoLoop() {
- *      Oled_Begin();
- *      Oled_Text(10, 20, "Hello!");
- *      Oled_RobotEyes(0, 0);
- *      Oled_End();
- *    }
- *    void onLoopFinish() { Oled_SystemMode(); }
- *  @endcode
- *
- *  ---------------------------------------------------------------------------
- *  HISTORY:
- *  Date        By              Comments
- *  ----------  --------------  ----------------------------------------------
- *  2025-12-18  Omkar Dandekar  Initial API
- *  2026-04-03  Omkar Dandekar  Simple API layer, boxy eyes, DrawText/Number
- ******************************************************************************/
+ #  SPDX-License-Identifier: GPL-3.0-or-later                                  #
+ #  SPDX-FileCopyrightText: 2025 Drona Aviation                                #
+ #  -------------------------------------------------------------------------  #
+ #  Copyright (c) 2025 Drona Aviation                                          #
+ #  All rights reserved.                                                       #
+ #  -------------------------------------------------------------------------  #
+ #  Author: Omkar Dandekar                                                     #
+ #  Project: MagisV2                                                           #
+ #  File: \src\main\API\Oled.h                                                 #
+ #  Created Date: Thu, 18th Dec 2025                                           #
+ #  Brief:                                                                     #
+ #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ #  Last Modified: Sun, 5th Apr 2026                                           #
+ #  Modified By: Omkar Dandekar                                                #
+ #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ #  HISTORY:                                                                   #
+ #  Date      	By	Comments                                                   #
+ #  ----------	---	---------------------------------------------------------  #
+*******************************************************************************/
 
 #pragma once
 
