@@ -8,18 +8,18 @@
  #  Created Date: Sat, 25th Jan 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Wed, 31st Dec 2025                                          #
+ #  Last Modified: Tue, 5th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
  #  Date      	By	Comments                                                   #
  #  ----------	---	---------------------------------------------------------  #
  2025-09-XX   Omkar Dandekar     Introduced OLED ownership control via         #
- #                                 oledMode (SYSTEM / USER). System rendering  # 
+ #                                 oledMode (SYSTEM / USER). System rendering  #
  #                                 is now disabled when OLED is owned by user  #
  #                                 code, enabling safe custom UI, graphics,    #
  #                                 and PlutoBlocks-based OLED usage without    #
- #                                 interfering with flight telemetry.          # 
+ #                                 interfering with flight telemetry.          #
 *******************************************************************************/
 #include "oled_display.h"
 
@@ -81,7 +81,6 @@ bool OledStartupPageEnd = false;    // Indicates if the startup page has ended
 int blink_at      = 2;    // Blink interval
 int blink_counter = 0;    // Counter for blinking logic
 
-
 /**
  * @brief Initializes the OLED display.
  */
@@ -95,21 +94,24 @@ void OledStartUpInit ( void ) {
  */
 void OledStartUpPage ( void ) {
   if ( OledInitStatus ) {
-    updatedMillis = millis ( );                                           // Update current time
-    if ( updatedMillis - lastOledStartUpMillis < OledStartUpTime ) {      // Check if startup time hasn't elapsed
-      i2c_OLED_set_xy ( 2, 0 );
-      tfp_sprintf ( buffer, "%s for %s", FwName, targetName );            // Display firmware and target name
+    updatedMillis = millis ( );                                         // Update current time
+    if ( updatedMillis - lastOledStartUpMillis < OledStartUpTime ) {    // Check if startup time hasn't elapsed
+      i2c_OLED_set_xy ( 7, 0 );
+      tfp_sprintf ( buffer, "%s", FwName );    // Display firmware name
       i2c_OLED_send_string ( buffer );
       i2c_OLED_set_xy ( 2, 2 );
-      i2c_OLED_send_string ( "By DRONA AVIATION" );                       // Display author information
+      tfp_sprintf ( buffer, "FC: %s", targetName );    // Display target name
+      i2c_OLED_send_string ( buffer );
       i2c_OLED_set_xy ( 0, 4 );
       tfp_sprintf ( buffer, "FW:%s | API:%s", FwVersion, ApiVersion );    // Display firmware and API version
       i2c_OLED_send_string ( buffer );
-      i2c_OLED_set_xy ( 2, 6 );
-      tfp_sprintf ( buffer, "Build : %s", buildDate );                    // Display build date
+      i2c_OLED_set_xy ( 1, 5 );
+      tfp_sprintf ( buffer, "Build : %s", buildDate );    // Display build date
       i2c_OLED_send_string ( buffer );
-      OledStartupPageEnd = true;                                          // Mark that startup page has been shown
-    } else if ( OledStartupPageEnd ) {                                    // Clear the display after showing the startup page
+      i2c_OLED_set_xy ( 2, 7 );
+      i2c_OLED_send_string ( "By DRONA AVIATION" );    // Display author information
+      OledStartupPageEnd = true;                       // Mark that startup page has been shown
+    } else if ( OledStartupPageEnd ) {                 // Clear the display after showing the startup page
       i2c_OLED_clear_display_quick ( );
       OledStartupPageEnd = false;
     }
@@ -130,15 +132,19 @@ void dispVoltage ( void ) {
  */
 void dispDevMode ( void ) {
   i2c_OLED_set_xy ( 0, 0 );
-  i2c_OLED_send_string ( devmode ? "DEV |" : "    |" );    // Display DEV if in development mode
+  i2c_OLED_send_string ( devmode ? "DEV |" : " X  |" );    // Display DEV if in development mode
 }
 
 /**
  * @brief Displays the connection status of the receiver.
  */
 void dispRxConnection ( void ) {
+  static bool rx_blink = false;
+  rx_blink             = ! rx_blink;    // toggle every call
+
+  bool connected = rxIsReceivingSignal ( ) || ppmIsRecievingSignal ( );
   i2c_OLED_set_xy ( 0, 7 );
-  i2c_OLED_send_string ( ( rxIsReceivingSignal ( ) || ppmIsRecievingSignal ( ) ) ? "RX  |" : "    |" );    // Display RX if receiving signal
+  i2c_OLED_send_string ( connected ? ( rx_blink ? "RX *|" : "RX  |" ) : " X  |" );    // blink asterisk when connected
 }
 
 /**
@@ -146,9 +152,8 @@ void dispRxConnection ( void ) {
  */
 void dispArmData ( void ) {
   i2c_OLED_set_xy ( 16, 7 );
-  i2c_OLED_send_string ( IS_RC_MODE_ACTIVE ( BOXARM ) ? "| ARM" : "|    " );    // Display ARM if armed
+  i2c_OLED_send_string ( IS_RC_MODE_ACTIVE ( BOXARM ) ? "| ARM" : "|  X " );    // Display ARM if armed
 }
-
 
 /**
  * @brief Displays the flight status on the OLED.
@@ -190,7 +195,6 @@ void dispFlightStatus ( void ) {
 
   blink_counter++;
 }
-
 
 /**
  * @brief Manages and displays the stopwatch on the OLED.
@@ -237,7 +241,6 @@ void dispStopWatch ( void ) {
   i2c_OLED_send_string ( buffer );
 }
 
-
 /**
  * @brief Displays navigation-related information on the OLED screen.
  *
@@ -262,8 +265,6 @@ void OledDisplayNav ( void ) {
     dispArmData ( );
   }
 }
-
-
 
 /**
  * @brief Displays system data on the OLED screen.
@@ -326,19 +327,18 @@ void OledDisplaySystemData ( void ) {
  * This function periodically updates the display with navigation and system data,
  * ensuring that the display refreshes at a set interval.
  */
-void OledDisplayData(void)
-{
-    if (!OledInitStatus) return;
+void OledDisplayData ( void ) {
+  if ( ! OledInitStatus ) return;
 
-    //  User owns the OLED → system must not draw
-    if (oledMode == OLED_MODE_USER) {
-        return;
-    }
+  //  User owns the OLED → system must not draw
+  if ( oledMode == OLED_MODE_USER ) {
+    return;
+  }
 
-    updatedMillis = millis ( );
-    if (updatedMillis - OldOledDisplayDataMillis >= 200) {
-        OledDisplayNav();
-        OledDisplaySystemData();
-        OldOledDisplayDataMillis = updatedMillis;
-    }
+  updatedMillis = millis ( );
+  if ( updatedMillis - OldOledDisplayDataMillis >= 200 ) {
+    OledDisplayNav ( );
+    OledDisplaySystemData ( );
+    OldOledDisplayDataMillis = updatedMillis;
+  }
 }
