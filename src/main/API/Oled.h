@@ -1,7 +1,4 @@
 /*******************************************************************************
- #  SPDX-License-Identifier: GPL-3.0-or-later                                  #
- #  SPDX-FileCopyrightText: 2025 Drona Aviation                                #
- #  -------------------------------------------------------------------------  #
  #  Copyright (c) 2025 Drona Aviation                                          #
  #  All rights reserved.                                                       #
  #  -------------------------------------------------------------------------  #
@@ -11,339 +8,270 @@
  #  Created Date: Thu, 18th Dec 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Sun, 5th Apr 2026                                           #
- #  Modified By: Omkar Dandekar                                                #
+ #  Last Modified: Tue, 5th May 2026                                           #
+ #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
  #  Date      	By	Comments                                                   #
  #  ----------	---	---------------------------------------------------------  #
-*******************************************************************************/
+ *******************************************************************************/
 
-#pragma once
+#ifndef OLED_API_H
+#define OLED_API_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-/** @brief Screen width in pixels */
-#define OLED_WIDTH   128
-/** @brief Screen height in pixels */
-#define OLED_HEIGHT   64
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-/* ============================================================================
- *  SIMPLE API — start here, no buffer management needed
- * ============================================================================ */
-
-/**
- * @brief Start a new OLED frame.
- * Clears the internal buffer and enters USER mode automatically.
- * Call this at the beginning of plutoLoop().
- */
-void Oled_Begin ( void );
-
-/**
- * @brief Finish the frame and send to display.
- * Only changed pixels are sent over I2C (non-blocking).
- * Call this at the end of plutoLoop().
- */
-void Oled_End ( void );
-
-/**
- * @brief Draw text at a pixel position.
- * Each character is 6px wide and 7px tall. Max ~21 chars per line.
- * @param x     X pixel position (0–127)
- * @param y     Y pixel position (0–63)
- * @param text  Null-terminated string
- */
-void Oled_Text ( int x, int y, const char *text );
-
-/**
- * @brief Draw an integer number at a pixel position.
- * Handles negative numbers. Each digit is 6px wide.
- * @param x       X pixel position (0–127)
- * @param y       Y pixel position (0–63)
- * @param number  Integer value to display
- */
-void Oled_Number ( int x, int y, int number );
-
-/**
- * @brief Draw a single pixel.
- * @param x  X position (0–127)
- * @param y  Y position (0–63)
- */
-void Oled_Pixel ( int x, int y );
-
-/**
- * @brief Draw a line between two points.
- * @param x0  Start X (0–127)
- * @param y0  Start Y (0–63)
- * @param x1  End X (0–127)
- * @param y1  End Y (0–63)
- */
-void Oled_Line ( int x0, int y0, int x1, int y1 );
-
-/**
- * @brief Draw a filled rectangle.
- * @param x  Top-left X (0–127)
- * @param y  Top-left Y (0–63)
- * @param w  Width in pixels
- * @param h  Height in pixels
- */
-void Oled_Rect ( int x, int y, int w, int h );
-
-/**
- * @brief Draw a filled rounded rectangle.
- * @param x  Top-left X (0–127)
- * @param y  Top-left Y (0–63)
- * @param w  Width in pixels
- * @param h  Height in pixels
- * @param r  Corner radius (0 = sharp, 6–10 = smooth)
- */
-void Oled_RoundRect ( int x, int y, int w, int h, int r );
-
-/**
- * @brief Draw a filled circle.
- * @param cx  Center X (0–127)
- * @param cy  Center Y (0–63)
- * @param r   Radius in pixels
- */
-void Oled_Circle ( int cx, int cy, int r );
-
-/**
- * @brief Draw a rectangle outline (not filled).
- * @param x  Top-left X
- * @param y  Top-left Y
- * @param w  Width
- * @param h  Height
- */
-void Oled_RectOutline ( int x, int y, int w, int h );
-
-/**
- * @brief Draw a rounded rectangle outline (not filled).
- * @param x  Top-left X
- * @param y  Top-left Y
- * @param w  Width
- * @param h  Height
- * @param r  Corner radius
- */
-void Oled_RoundRectOutline ( int x, int y, int w, int h, int r );
-
-/**
- * @brief Draw a circle outline (not filled).
- * @param cx  Center X
- * @param cy  Center Y
- * @param r   Radius
- */
-void Oled_CircleOutline ( int cx, int cy, int r );
-
-/**
- * @brief Draw two robot-style boxy eyes (centered on screen).
- * Pupils track with the given offset. Auto-clamped to stay inside.
- * @param pupilX  Horizontal pupil offset (-5 to +5, 0 = center)
- * @param pupilY  Vertical pupil offset (-5 to +5, 0 = center)
- */
-void Oled_RobotEyes ( int pupilX, int pupilY );
-
-/**
- * @brief Draw two round cartoon eyes (centered on screen).
- * Pupils track with the given offset. Auto-clamped to stay inside.
- * @param pupilX  Horizontal pupil offset (-5 to +5, 0 = center)
- * @param pupilY  Vertical pupil offset (-5 to +5, 0 = center)
- */
-void Oled_RoundEyes ( int pupilX, int pupilY );
-
-/**
- * @brief Draw two X-shaped dead eyes (crash / error state).
- */
-void Oled_DeadEyes ( void );
-
-/**
- * @brief Draw dual RC joystick visualization.
- * Left stick: yaw (X) + throttle (Y). Right stick: roll (X) + pitch (Y).
- * @param throttle  Throttle RC value (1000–2000)
- * @param yaw       Yaw RC value (1000–2000)
- * @param roll      Roll RC value (1000–2000)
- * @param pitch     Pitch RC value (1000–2000)
- */
-void Oled_Joysticks ( int throttle, int yaw, int roll, int pitch );
-
-/**
- * @brief Draw a horizontal pitch indicator line.
- * Line moves up/down based on pitch angle.
- * @param pitch  Pitch angle in degrees (-90 to +90)
- */
-void Oled_PitchLine ( int pitch );
-
-/**
- * @brief Draw a vertical roll indicator line.
- * Line moves left/right based on roll angle.
- * @param roll  Roll angle in degrees (-90 to +90)
- */
-void Oled_RollLine ( int roll );
-
-/**
- * @brief Erase (draw black) a rectangular area.
- * @param x  Top-left X
- * @param y  Top-left Y
- * @param w  Width
- * @param h  Height
- */
-void Oled_Erase ( int x, int y, int w, int h );
-
+typedef enum {
+  System,
+  User
+} Oled_mode_e;
 
 /* ============================================================================
  *  SETUP & MODE CONTROL
  * ============================================================================ */
 
-/** @brief Enable OLED subsystem. Call once in plutoInit(). */
+/**
+ * @brief Enables the OLED subsystem.
+ *
+ * This function should be called once during the application initialization
+ * (typically in `plutoInit`) to enable the OLED display logic.
+ */
+
 void Oled_Init ( void );
 
-/** @brief Clear the entire display. Skipped automatically if drone is armed. */
-void Oled_Clear ( void );
+/**
+ * @brief Sets the current OLED operation mode.
+ *
+ * Switches between `System` mode (firmware telemetry) and `User` mode
+ * (custom drawing).
+ *
+ * @param mode The desired OLED mode (`Oled_mode_e`).
+ */
 
-/** @brief Return OLED to firmware telemetry. Call in onLoopFinish(). */
-void Oled_SystemMode ( void );
-
-/** @brief Take OLED for custom drawing. System rendering stops. */
-void Oled_UserMode ( void );
+void Oled_Mode ( Oled_mode_e mode );
 
 /**
- * @brief Flush a custom framebuffer to the display.
- * Only changed pixels are sent. Works only in USER mode.
- * @param screen  Pointer to 1024-byte framebuffer
- */
-void Oled_Update ( uint8_t *screen );
-
-/** @brief Returns true if OLED is in USER mode (you own the screen). */
-bool Oled_IsUserMode ( void );
-
-/** @brief Returns true if OLED is in SYSTEM mode (firmware owns the screen). */
-bool Oled_IsSystemMode ( void );
-
-
-/* ============================================================================
- *  ADVANCED DRAWING — pass your own framebuffer
+ * @brief Checks if the OLED is currently in a specific mode.
  *
- *  Use these if you need full control (multiple buffers, erase pixels, etc).
- *  For most users, the Simple API above is easier.
- * ============================================================================ */
+ * @param mode The mode to check against.
+ * @return `true` if the OLED is in the specified mode, `false` otherwise.
+ */
 
-/** @brief Print text on OLED grid. SYSTEM mode only.
- *  @param col   Column 0–20
- *  @param row   Row 1–6 (rows 0,7 are status bar)
- *  @param text  String to print */
+bool Oled_Is_Mode ( Oled_mode_e mode );
+
+/**
+ * @brief Clears the entire OLED display.
+ *
+ * This operation is automatically skipped if the drone is currently armed
+ * to prevent I2C contention.
+ */
+
+void Oled_Clear ( void );
+
+/**
+ * @brief Finalizes the current frame and updates the display.
+ *
+ * Transmits only the changed pixels over I2C to the display hardware.
+ * This should be called at the end of every loop (typically in `plutoLoop`).
+ */
+
+void Oled_Update ( void );
+
+/**
+ * @brief Prints text directly to the OLED grid.
+ *
+ * This function is intended for `System` mode only.
+ *
+ * @param col Target text column (0–20).
+ * @param row Target text row (1–6; rows 0 and 7 are reserved for status).
+ * @param text The null-terminated string to print.
+ */
+
 void Oled_Print ( uint8_t col, uint8_t row, const char *text );
 
-/** @brief Draw text into framebuffer at pixel position.
- *  @param screen  Framebuffer pointer
- *  @param x       X pixel position (0–127)
- *  @param y       Y pixel position (0–63)
- *  @param text    String to draw */
-void Oled_DrawText ( uint8_t *screen, int x, int y, const char *text );
+/**
+ * @brief Draws text at a specific pixel position.
+ *
+ * Each character is approximately 6px wide and 7px tall.
+ * Max capacity is around 21 characters per line.
+ *
+ * @param x X pixel coordinate (0–127).
+ * @param y Y pixel coordinate (0–63).
+ * @param text The null-terminated string to be displayed.
+ */
 
-/** @brief Draw integer into framebuffer.
- *  @param screen  Framebuffer pointer
- *  @param x       X pixel position
- *  @param y       Y pixel position
- *  @param number  Integer (handles negative) */
-void Oled_DrawNumber ( uint8_t *screen, int x, int y, int number );
+void Oled_Text ( uint8_t x, uint8_t y, const char *text );
 
-/** @brief Set or clear a pixel.
- *  @param on  true = white, false = black */
-void Oled_DrawPixel ( uint8_t *screen, int x, int y, bool on );
+/**
+ * @brief Draws a signed integer number at a pixel position.
+ *
+ * Automatically handles negative signs. Each digit is 6px wide.
+ *
+ * @param x X pixel coordinate (0–127).
+ * @param y Y pixel coordinate (0–63).
+ * @param number The 16-bit signed integer value to display.
+ */
 
-/** @brief Horizontal line. @param length  Pixels to the right */
-void Oled_DrawHLine ( uint8_t *screen, int x, int y, int length, bool on );
+void Oled_Number ( uint8_t x, uint8_t y, int16_t number );
 
-/** @brief Vertical line. @param length  Pixels downward */
-void Oled_DrawVLine ( uint8_t *screen, int x, int y, int length, bool on );
+/**
+ * @brief Draws a single pixel on the screen.
+ *
+ * @param x X pixel coordinate (0–127).
+ * @param y Y pixel coordinate (0–63).
+ */
 
-/** @brief Line between two points (Bresenham). */
-void Oled_DrawLine ( uint8_t *screen, int x0, int y0, int x1, int y1, bool on );
+void Oled_Pixel ( uint8_t x, uint8_t y );
 
-/** @brief Rectangle outline. */
-void Oled_DrawRect ( uint8_t *screen, int x, int y, int w, int h, bool on );
+/**
+ * @brief Draws a line between two specified points.
+ *
+ * @param x0 Start X coordinate (0–127).
+ * @param y0 Start Y coordinate (0–63).
+ * @param x1 End X coordinate (0–127).
+ * @param y1 End Y coordinate (0–63).
+ */
 
-/** @brief Filled rectangle. */
-void Oled_FillRect ( uint8_t *screen, int x, int y, int w, int h, bool on );
+void Oled_Line ( uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1 );
 
-/** @brief Rounded rectangle outline. @param radius  Corner roundness */
-void Oled_DrawRoundedRect ( uint8_t *screen, int x, int y, int w, int h, int radius, bool on );
+/**
+ * @brief Draws a filled rectangle.
+ *
+ * @param x Top-left X coordinate (0–127).
+ * @param y Top-left Y coordinate (0–63).
+ * @param w Width of the rectangle in pixels.
+ * @param h Height of the rectangle in pixels.
+ */
 
-/** @brief Filled rounded rectangle. @param radius  Corner roundness */
-void Oled_FillRoundedRect ( uint8_t *screen, int x, int y, int w, int h, int radius, bool on );
+void Oled_Rect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h );
 
-/** @brief Circle outline. @param radius  Circle radius */
-void Oled_DrawCircle ( uint8_t *screen, int cx, int cy, int radius, bool on );
+/**
+ * @brief Draws a filled rectangle with rounded corners.
+ *
+ * @param x Top-left X coordinate (0–127).
+ * @param y Top-left Y coordinate (0–63).
+ * @param w Width of the rectangle in pixels.
+ * @param h Height of the rectangle in pixels.
+ * @param r Corner radius in pixels (0 for sharp, 6–10 recommended for smooth).
+ */
 
-/** @brief Filled circle. @param radius  Circle radius */
-void Oled_FillCircle ( uint8_t *screen, int cx, int cy, int radius, bool on );
+void Oled_RoundRect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r );
 
-/** @brief Arrow directions */
-typedef enum {
-    OLED_ARROW_UP,     /**< Pointing up */
-    OLED_ARROW_DOWN,   /**< Pointing down */
-    OLED_ARROW_LEFT,   /**< Pointing left */
-    OLED_ARROW_RIGHT   /**< Pointing right */
-} oled_arrow_dir_t;
+/**
+ * @brief Draws a filled circle.
+ *
+ * @param cx Center X coordinate (0–127).
+ * @param cy Center Y coordinate (0–63).
+ * @param r Radius of the circle in pixels.
+ */
 
-/** @brief Draw a directional arrow.
- *  @param size  Length of arrow shaft
- *  @param dir   OLED_ARROW_UP / DOWN / LEFT / RIGHT */
-void Oled_DrawArrow ( uint8_t *screen, int cx, int cy, int size, oled_arrow_dir_t dir, bool on );
+void Oled_Circle ( uint8_t cx, uint8_t cy, uint8_t r );
 
-/** @brief Draw a round eye with pupil.
- *  @param radius          Eye radius (14–18 typical)
- *  @param pupilOffsetX    Horizontal pupil offset (-5 to +5)
- *  @param pupilOffsetY    Vertical pupil offset (-5 to +5)
- *  @param filled          true = solid eye, false = outline */
-void Oled_DrawEye ( uint8_t *screen, int cx, int cy, int radius, int pupilOffsetX, int pupilOffsetY, bool filled );
+/**
+ * @brief Draws the outline of a rectangle.
+ *
+ * @param x Top-left X coordinate.
+ * @param y Top-left Y coordinate.
+ * @param w Width in pixels.
+ * @param h Height in pixels.
+ */
 
-/** @brief Draw X-shaped dead eye. @param size  Size of the X */
-void Oled_DrawXEye ( uint8_t *screen, int cx, int cy, int size );
+void Oled_RectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h );
 
-/** @brief Draw a boxy (rounded rect) eye with pupil.
- *  @param w    Eye width (36–40 typical)
- *  @param h    Eye height (28–30 typical)
- *  @param r    Corner radius (6 typical)
- *  @param pupilOffsetX  Horizontal pupil offset (-5 to +5)
- *  @param pupilOffsetY  Vertical pupil offset (-5 to +5)
- *  @param filled        true = solid eye, false = outline */
-void Oled_DrawBoxyEye ( uint8_t *screen, int cx, int cy, int w, int h, int r, int pupilOffsetX, int pupilOffsetY, bool filled );
+/**
+ * @brief Draws the outline of a rounded rectangle.
+ *
+ * @param x Top-left X coordinate.
+ * @param y Top-left Y coordinate.
+ * @param w Width in pixels.
+ * @param h Height in pixels.
+ * @param r Corner radius in pixels.
+ */
 
-/** @brief Draw boxy X-shaped dead eye.
- *  @param r  Corner radius */
-void Oled_DrawBoxyXEye ( uint8_t *screen, int cx, int cy, int w, int h, int r );
+void Oled_RoundRectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r );
 
-/** @brief Draw dual RC joystick HUD.
- *  @param throttle  RC value 1000–2000
- *  @param yaw       RC value 1000–2000
- *  @param roll      RC value 1000–2000
- *  @param pitch     RC value 1000–2000 */
-void Oled_DrawRCJoysticks ( uint8_t *screen, int throttle, int yaw, int roll, int pitch );
+/**
+ * @brief Draws the outline of a circle.
+ *
+ * @param cx Center X coordinate.
+ * @param cy Center Y coordinate.
+ * @param r Radius in pixels.
+ */
 
-/** @brief Pitch indicator line. @param pitch  Degrees -90 to +90 */
-void Oled_DrawPitchIndicator ( uint8_t *screen, int pitch );
+void Oled_CircleOutline ( uint8_t cx, uint8_t cy, uint8_t r );
 
-/** @brief Roll indicator line. @param roll  Degrees -90 to +90 */
-void Oled_DrawRollIndicator ( uint8_t *screen, int roll );
+/**
+ * @brief Draws two robot-style boxy eyes centered on the screen.
+ *
+ * Pupils track with the provided offset and are auto-clamped to the eye bounds.
+ *
+ * @param pupilX Horizontal pupil offset (-5 to +5, 0 = center).
+ * @param pupilY Vertical pupil offset (-5 to +5, 0 = center).
+ */
 
+void Oled_RobotEyes ( int8_t pupilX, int8_t pupilY );
 
-/* ============================================================================
- *  INTERNAL — firmware only, not for user code
- * ============================================================================ */
+/**
+ * @brief Draws two round cartoon-style eyes centered on the screen.
+ *
+ * Pupils track with the provided offset and are auto-clamped to the eye bounds.
+ *
+ * @param pupilX Horizontal pupil offset (-5 to +5, 0 = center).
+ * @param pupilY Vertical pupil offset (-5 to +5, 0 = center).
+ */
 
-typedef enum {
-    OLED_MODE_SYSTEM = 0,
-    OLED_MODE_USER
-} oled_mode_e;
+void Oled_RoundEyes ( int8_t pupilX, int8_t pupilY );
 
-extern oled_mode_e oledMode;
+/**
+ * @brief Draws two X-shaped eyes to indicate a "dead" or error state.
+ */
 
-#ifdef __cplusplus
-}
+void Oled_DeadEyes ( void );
+
+/**
+ * @brief Draws a visualization of dual RC joysticks.
+ *
+ * Left stick displays yaw (X) and throttle (Y).
+ * Right stick displays roll (X) and pitch (Y).
+ *
+ * @param throttle Current throttle RC value (1000–2000).
+ * @param yaw Current yaw RC value (1000–2000).
+ * @param roll Current roll RC value (1000–2000).
+ * @param pitch Current pitch RC value (1000–2000).
+ */
+
+void Oled_Joysticks ( uint16_t throttle, uint16_t yaw, uint16_t roll, uint16_t pitch );
+
+/**
+ * @brief Draws a horizontal line indicating the current pitch.
+ *
+ * The line shifts vertically based on the pitch angle.
+ *
+ * @param pitch Current pitch angle in degrees (-90 to +90).
+ */
+
+void Oled_PitchLine ( int16_t pitch );
+
+/**
+ * @brief Draws a vertical line indicating the current roll.
+ *
+ * The line shifts horizontally based on the roll angle.
+ *
+ * @param roll Current roll angle in degrees (-90 to +90).
+ */
+
+void Oled_RollLine ( int16_t roll );
+
+/**
+ * @brief Erases a specific rectangular area by drawing it black.
+ *
+ * @param x Top-left X coordinate.
+ * @param y Top-left Y coordinate.
+ * @param w Width of the area to erase.
+ * @param h Height of the area to erase.
+ */
+
+void Oled_Erase ( int16_t x, int16_t y, int16_t w, int16_t h );
+
 #endif

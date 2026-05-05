@@ -21,6 +21,7 @@ void plutoRxConfig ( void ) {
 // The setup function is called once at Pluto's hardware startup
 void plutoInit ( void ) {
   // Add your hardware initialization code here
+  Oled_Init ( );
 }
 
 // The function is called once before plutoLoop when you activate Developer Mode
