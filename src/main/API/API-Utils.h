@@ -36,7 +36,6 @@
 #include "drivers/gpio.h"
 #include "drivers/light_led.h"
 #include "drivers/pwm_output.h"
-#include "Specifiers.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,23 +93,17 @@ extern bool isUserMotorPwm [ 4 ];
 extern bool isUserSetVelocity;
 extern bool isUserHeadFreeHoldSet;
 
-
-
 void userEnabledLand ( );
 void resetUserRCflag ( void );
-
-
 
 void xRangingInit ( void );
 void applyObjectAvoidance ( );
 
-int getGPIOport ( unibus_e pin );
-GPIO_Pin getGPIOpin ( unibus_e pin );
-uint32_t getGPIOclock ( unibus_e pin );
-uint8_t getGPIOpinSource ( unibus_e pin );
-uint16_t getTimerCh ( unibus_e pin );
-
-
+// int getGPIOport ( unibus_e pin );
+// GPIO_Pin getGPIOpin ( unibus_e pin );
+// uint32_t getGPIOclock ( unibus_e pin );
+// uint8_t getGPIOpinSource ( unibus_e pin );
+// uint16_t getTimerCh ( unibus_e pin );
 
 void resetUser ( void );
 

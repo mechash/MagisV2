@@ -284,8 +284,7 @@ DRONA_DRIVERS = drivers/opticflow_paw3903.cpp \
 DRONA_COMMAND = command/command.cpp \
             		command/localisationCommand.cpp \
 
-DRONA_API =	API/Specifiers.cpp \
-						API-Src/Status-LED.cpp \
+DRONA_API =	API-Src/Status-LED.cpp \
 		    		API-Src/Peripheral-ADC.cpp \
 		    		API-Src/Peripheral-PWM.cpp \
 		    		API-Src/Peripheral-GPIO.cpp \

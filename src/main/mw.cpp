@@ -11,7 +11,7 @@
  #  Created Date: Wed, 31st Dec 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Sun, 1st Feb 2026                                           #
+ #  Last Modified: Tue, 5th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
@@ -103,7 +103,6 @@
 #include "API/RC-Interface.h"
 #include "API/FC-Control.h"
 #include "API/FC-Data.h"
-#include "API/Specifiers.h"
 #include "API/Motor.h"
 #include "PlutoPilot.h"
 #include "API/XRanging.h"
@@ -270,7 +269,7 @@ bool isCalibrating ( ) {
   // Note: compass calibration is handled completely differently, outside of the main loop, see f.CALIBRATE_MAG
 #ifdef MAG_ENFORCE
   // to check whether mag calibration is done, if not the don't arm
-  if ( masterConfig.magScale.raw [ 0 ] == 0 || masterConfig.magScale.raw [ 1 ] == 0 || masterConfig.magScale.raw [ 2 ] == 0 || !isMagCalibrated ) {
+  if ( masterConfig.magScale.raw [ 0 ] == 0 || masterConfig.magScale.raw [ 1 ] == 0 || masterConfig.magScale.raw [ 2 ] == 0 || ! isMagCalibrated ) {
     set_FSI ( Mag_Calibration );
   } else {
     reset_FSI ( Mag_Calibration );
