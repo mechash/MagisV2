@@ -1,7 +1,4 @@
 ###############################################################################
-#  SPDX-License-Identifier: GPL-3.0-or-later                                  #
-#  SPDX-FileCopyrightText: 2025 Drona Aviation                                #
-#  -------------------------------------------------------------------------  #
 #  Copyright (c) 2025 Drona Aviation                                          #
 #  All rights reserved.                                                       #
 #  -------------------------------------------------------------------------  #
@@ -11,8 +8,8 @@
 #  Created Date: Mon, 28th Apr 2025                                           #
 #  Brief:                                                                     #
 #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
-#  Last Modified: Fri, 4th Apr 2026                                           #
-#  Modified By: Omkar Dandekar (techsavvyomi)                                 #
+#  Last Modified: Mon, 7th Apr 2026                                           #
+#  Modified By: Ashish Jaiswal (MechAsh) <AJ>                                 #
 #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 #  HISTORY:                                                                   #
 #  Date      	By	Comments                                                  #
@@ -31,9 +28,9 @@ TARGET	?=
 BUILD_TYPE	?= BIN
 PROJECT ?= DEFAULT
 LIB_MAJOR_VERSION	=	1
-LIB_MINOR_VERSION	=	1
-FW_Version	=	3.1.0
-API_Version	=	1.1.0
+LIB_MINOR_VERSION	=	2
+FW_Version	=	3.2.0
+API_Version	=	1.2.0
 # Flash size (KB).  Some low-end chips actually have more flash than advertised, use this to override.
 FLASH_SIZE	?=
 RAM_SIZE 	?=
