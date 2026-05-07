@@ -32,8 +32,8 @@ BUILD_TYPE	?= BIN
 PROJECT ?= DEFAULT
 LIB_MAJOR_VERSION	=	1
 LIB_MINOR_VERSION	=	1
-FW_Version	=	3.0.1
-API_Version	=	1.0.0
+FW_Version	=	3.1.0
+API_Version	=	1.1.0
 # Flash size (KB).  Some low-end chips actually have more flash than advertised, use this to override.
 FLASH_SIZE	?=
 RAM_SIZE 	?=
@@ -286,8 +286,7 @@ DRONA_DRIVERS = drivers/opticflow_paw3903.cpp \
 DRONA_COMMAND = command/command.cpp \
             		command/localisationCommand.cpp \
 
-DRONA_API =	API/Specifiers.cpp \
-						API-Src/Status-LED.cpp \
+DRONA_API =	API-Src/Status-LED.cpp \
 		    		API-Src/Peripheral-ADC.cpp \
 		    		API-Src/Peripheral-PWM.cpp \
 		    		API-Src/Peripheral-GPIO.cpp \
