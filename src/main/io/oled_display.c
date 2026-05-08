@@ -431,12 +431,12 @@ void Oled_Print ( uint8_t col, uint8_t row, const char *text ) {
 /**
  * @brief Set or clear a single pixel in the framebuffer.
  */
-void Oled_DrawPixel ( uint8_t *buf, uint8_t x, uint8_t y, bool on ) {
+void Oled_DrawPixel ( uint8_t *buf, int16_t x, int16_t y, bool on ) {
   if ( ! buf ) return;
   if ( x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT ) return;
 
-  uint8_t index = x + ( y >> 3 ) * SCREEN_WIDTH;
-  uint8_t mask  = ( uint8_t ) ( 1U << ( y & 7 ) );
+  uint16_t index = ( uint16_t ) ( x + ( y >> 3 ) * SCREEN_WIDTH );
+  uint8_t  mask  = ( uint8_t ) ( 1U << ( y & 7 ) );
 
   if ( on )
     buf [ index ] |= mask;
@@ -444,14 +444,14 @@ void Oled_DrawPixel ( uint8_t *buf, uint8_t x, uint8_t y, bool on ) {
     buf [ index ] &= ~mask;
 }
 
-void Oled_DrawHLine ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t length, bool on ) {
-  for ( uint8_t i = 0; i < length; i++ ) {
+void Oled_DrawHLine ( uint8_t *buf, int16_t x, int16_t y, int16_t length, bool on ) {
+  for ( int16_t i = 0; i < length; i++ ) {
     Oled_DrawPixel ( buf, x + i, y, on );
   }
 }
 
-void Oled_DrawVLine ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t length, bool on ) {
-  for ( uint8_t i = 0; i < length; i++ ) {
+void Oled_DrawVLine ( uint8_t *buf, int16_t x, int16_t y, int16_t length, bool on ) {
+  for ( int16_t i = 0; i < length; i++ ) {
     Oled_DrawPixel ( buf, x, y + i, on );
   }
 }
@@ -459,18 +459,18 @@ void Oled_DrawVLine ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t length, bool o
 /**
  * @brief Draw a line using Bresenham’s algorithm.
  */
-void Oled_DrawLine ( uint8_t *buf, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, bool on ) {
-  int8_t dx  = ( int8_t ) ABS ( x1 - x0 );
-  int8_t dy  = ( int8_t ) ABS ( y1 - y0 );
-  int8_t sx  = ( x0 < x1 ) ? 1 : -1;
-  int8_t sy  = ( y0 < y1 ) ? 1 : -1;
-  int8_t err = dx - dy;
+void Oled_DrawLine ( uint8_t *buf, int16_t x0, int16_t y0, int16_t x1, int16_t y1, bool on ) {
+  int16_t dx  = ( int16_t ) ABS ( x1 - x0 );
+  int16_t dy  = ( int16_t ) ABS ( y1 - y0 );
+  int16_t sx  = ( x0 < x1 ) ? 1 : -1;
+  int16_t sy  = ( y0 < y1 ) ? 1 : -1;
+  int16_t err = dx - dy;
 
   while ( 1 ) {
     Oled_DrawPixel ( buf, x0, y0, on );
     if ( x0 == x1 && y0 == y1 ) break;
 
-    int8_t e2 = ( int8_t ) ( err << 1 );
+    int16_t e2 = ( int16_t ) ( err << 1 );
     if ( e2 > -dy ) {
       err -= dy;
       x0 += sx;
@@ -485,7 +485,7 @@ void Oled_DrawLine ( uint8_t *buf, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y
 /**
  * @brief Draw text into framebuffer at pixel coordinates.
  */
-void Oled_DrawText ( uint8_t *screen, uint8_t x, uint8_t y, const char *text ) {
+void Oled_DrawText ( uint8_t *screen, int16_t x, int16_t y, const char *text ) {
   if ( ! screen || ! text ) return;
 
   while ( *text ) {
@@ -494,9 +494,9 @@ void Oled_DrawText ( uint8_t *screen, uint8_t x, uint8_t y, const char *text ) {
     uint8_t idx = ch - 32;
 
     // Draw 5 columns of the glyph
-    for ( uint8_t col = 0; col < 5; col++ ) {
+    for ( int16_t col = 0; col < 5; col++ ) {
       uint8_t bits = multiWiiFont [ idx ][ col ];
-      for ( uint8_t row = 0; row < 7; row++ ) {
+      for ( int16_t row = 0; row < 7; row++ ) {
         if ( bits & ( 1 << row ) ) {
           Oled_DrawPixel ( screen, x + col, y + row, true );
         }
@@ -513,7 +513,7 @@ void Oled_DrawText ( uint8_t *screen, uint8_t x, uint8_t y, const char *text ) {
 /**
  * @brief Draw an integer number into framebuffer.
  */
-void Oled_DrawNumber ( uint8_t *screen, uint8_t x, uint8_t y, int16_t number ) {
+void Oled_DrawNumber ( uint8_t *screen, int16_t x, int16_t y, int16_t number ) {
   char buf [ 12 ];    // enough for -128 to 127
   uint8_t i = 0;
   bool neg  = false;
@@ -545,15 +545,15 @@ void Oled_DrawNumber ( uint8_t *screen, uint8_t x, uint8_t y, int16_t number ) {
  * SHAPES (OUTLINE & FILLED)
  * ============================================================================ */
 
-void Oled_DrawRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8_t h, bool on ) {
+void Oled_DrawRect ( uint8_t *buf, int16_t x, int16_t y, int16_t w, int16_t h, bool on ) {
   Oled_DrawHLine ( buf, x, y, w, on );
   Oled_DrawHLine ( buf, x, y + h - 1, w, on );
   Oled_DrawVLine ( buf, x, y, h, on );
   Oled_DrawVLine ( buf, x + w - 1, y, h, on );
 }
 
-void Oled_FillRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8_t h, bool on ) {
-  for ( uint8_t i = 0; i < h; i++ ) {
+void Oled_FillRect ( uint8_t *buf, int16_t x, int16_t y, int16_t w, int16_t h, bool on ) {
+  for ( int16_t i = 0; i < h; i++ ) {
     Oled_DrawHLine ( buf, x, y + i, w, on );
   }
 }
@@ -561,9 +561,9 @@ void Oled_FillRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8_t h, b
 /**
  * @brief Helper: draw quarter-circle arcs for rounded rect corners.
  */
-static void drawCornerArcs ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r, bool on ) {
-  uint8_t cx, cy;
-  uint8_t px = r, py = 0, err = 0;
+static void drawCornerArcs ( uint8_t *buf, int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, bool on ) {
+  int16_t cx, cy;
+  int16_t px = r, py = 0, err = 0;
 
   while ( px >= py ) {
     // Top-right corner
@@ -596,7 +596,7 @@ static void drawCornerArcs ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint
   }
 }
 
-void Oled_DrawRoundedRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r, bool on ) {
+void Oled_DrawRoundedRect ( uint8_t *buf, int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, bool on ) {
   if ( r <= 0 ) {
     Oled_DrawRect ( buf, x, y, w, h, on );
     return;
@@ -614,7 +614,7 @@ void Oled_DrawRoundedRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8
   drawCornerArcs ( buf, x, y, w, h, r, on );
 }
 
-void Oled_FillRoundedRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r, bool on ) {
+void Oled_FillRoundedRect ( uint8_t *buf, int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, bool on ) {
   if ( r <= 0 || r > w / 2 || r > h / 2 ) {
     Oled_FillRect ( buf, x, y, w, h, on );
     return;
@@ -625,7 +625,7 @@ void Oled_FillRoundedRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8
   Oled_FillRect ( buf, x, y + r, r, h - 2 * r, on );
   Oled_FillRect ( buf, x + w - r, y + r, r, h - 2 * r, on );
   // Fill corner circles
-  uint8_t px = r, py = 0, err = 0;
+  int16_t px = r, py = 0, err = 0;
   while ( px >= py ) {
     Oled_DrawHLine ( buf, x + r - px, y + r - py, px, on );            // top-left
     Oled_DrawHLine ( buf, x + w - r, y + r - py, px, on );             // top-right
@@ -645,8 +645,8 @@ void Oled_FillRoundedRect ( uint8_t *buf, uint8_t x, uint8_t y, uint8_t w, uint8
   }
 }
 
-void Oled_DrawCircle ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t r, bool on ) {
-  uint8_t x = r, y = 0, err = 0;
+void Oled_DrawCircle ( uint8_t *buf, int16_t cx, int16_t cy, int16_t r, bool on ) {
+  int16_t x = r, y = 0, err = 0;
 
   while ( x >= y ) {
     Oled_DrawPixel ( buf, cx + x, cy + y, on );
@@ -667,8 +667,8 @@ void Oled_DrawCircle ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t r, bool on 
   }
 }
 
-void Oled_FillCircle ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t r, bool on ) {
-  uint8_t x = r, y = 0, err = 0;
+void Oled_FillCircle ( uint8_t *buf, int16_t cx, int16_t cy, int16_t r, bool on ) {
+  int16_t x = r, y = 0, err = 0;
   Oled_DrawHLine ( buf, cx - r, cy, 2 * r + 1, on );
 
   while ( x >= y ) {
@@ -729,10 +729,10 @@ void Oled_DrawRollIndicator ( uint8_t *buf, int16_t roll ) {
   Oled_DrawLine ( buf, ( uint8_t ) ( centerX + rollOffset ), 0, ( uint8_t ) ( centerX + rollOffset ), SCREEN_HEIGHT - 1, true );
 }
 
-void Oled_DrawArrow ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t size, oled_arrow_dir_t dir, bool on ) {
+void Oled_DrawArrow ( uint8_t *buf, int16_t cx, int16_t cy, int16_t size, oled_arrow_dir_t dir, bool on ) {
   if ( ! buf || size <= 0 ) return;
-  uint8_t half = size / 2;
-  uint8_t head = size / 3;
+  int16_t half = size / 2;
+  int16_t head = size / 3;
 
   switch ( dir ) {
     case OLED_ARROW_UP:
@@ -770,85 +770,85 @@ static int8_t clampPupil ( int8_t v, uint8_t max ) {
   return v;
 }
 
-static void Oled_DrawEyeWithPupil ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t radius, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
+static void Oled_DrawEyeWithPupil ( uint8_t *buf, int16_t cx, int16_t cy, int16_t radius, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
   Oled_FillCircle ( buf, cx, cy, radius, true );
-  uint8_t pupilRadius = ( uint8_t ) ( radius / 3 );
-  uint8_t maxOffset   = ( uint8_t ) ( radius - pupilRadius - 1 );
+  int16_t pupilRadius = ( int16_t ) ( radius / 3 );
+  int16_t maxOffset   = ( int16_t ) ( radius - pupilRadius - 1 );
   pupilOffsetX        = clampPupil ( pupilOffsetX, maxOffset );
   pupilOffsetY        = clampPupil ( pupilOffsetY, maxOffset );
   Oled_FillCircle ( buf, ( uint8_t ) ( cx + pupilOffsetX ), ( uint8_t ) ( cy + pupilOffsetY ), pupilRadius, false );
 }
 
-static void Oled_DrawEyeOutlineWithPupil ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t radius, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
+static void Oled_DrawEyeOutlineWithPupil ( uint8_t *buf, int16_t cx, int16_t cy, int16_t radius, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
   Oled_DrawCircle ( buf, cx, cy, radius, true );
-  uint8_t pupilRadius = ( uint8_t ) ( radius / 3 );
-  uint8_t maxOffset   = ( uint8_t ) ( radius - pupilRadius - 1 );
+  int16_t pupilRadius = ( int16_t ) ( radius / 3 );
+  int16_t maxOffset   = ( int16_t ) ( radius - pupilRadius - 1 );
   pupilOffsetX        = clampPupil ( pupilOffsetX, maxOffset );
   pupilOffsetY        = clampPupil ( pupilOffsetY, maxOffset );
   Oled_FillCircle ( buf, ( uint8_t ) ( cx + pupilOffsetX ), ( uint8_t ) ( cy + pupilOffsetY ), pupilRadius, true );
 }
 
-void Oled_DrawEye ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t radius, int8_t pupilOffsetX, int8_t pupilOffsetY, bool filled ) {
+void Oled_DrawEye ( uint8_t *buf, int16_t cx, int16_t cy, int16_t radius, int8_t pupilOffsetX, int8_t pupilOffsetY, bool filled ) {
   if ( filled )
     Oled_DrawEyeWithPupil ( buf, cx, cy, radius, pupilOffsetX, pupilOffsetY );
   else
     Oled_DrawEyeOutlineWithPupil ( buf, cx, cy, radius, pupilOffsetX, pupilOffsetY );
 }
 
-void Oled_DrawXEye ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t size ) {
-  uint8_t half = size / 2;
+void Oled_DrawXEye ( uint8_t *buf, int16_t cx, int16_t cy, int16_t size ) {
+  int16_t half = size / 2;
   Oled_DrawLine ( buf, cx - half, cy - half, cx + half, cy + half, true );
   Oled_DrawLine ( buf, cx - half, cy + half, cx + half, cy - half, true );
 }
 
-static void Oled_DrawBoxyEyeFilled ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t w, uint8_t h, uint8_t r, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
-  uint8_t ex = ( uint8_t ) ( cx - w / 2 );
-  uint8_t ey = ( uint8_t ) ( cy - h / 2 );
+static void Oled_DrawBoxyEyeFilled ( uint8_t *buf, int16_t cx, int16_t cy, int16_t w, int16_t h, int16_t r, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
+  int16_t ex = ( int16_t ) ( cx - w / 2 );
+  int16_t ey = ( int16_t ) ( cy - h / 2 );
   Oled_FillRoundedRect ( buf, ex, ey, w, h, r, true );
 
-  uint8_t pw      = ( uint8_t ) ( w / 3 );
-  uint8_t ph      = ( uint8_t ) ( h / 3 );
-  uint8_t pr      = ( uint8_t ) ( ( r > 1 ) ? r / 2 : 1 );
-  uint8_t maxOffX = ( uint8_t ) ( ( w - pw ) / 2 - 1 );
-  uint8_t maxOffY = ( uint8_t ) ( ( h - ph ) / 2 - 1 );
-  pupilOffsetX    = clampPupil ( pupilOffsetX, maxOffX );
-  pupilOffsetY    = clampPupil ( pupilOffsetY, maxOffY );
+  int16_t pw      = ( int16_t ) ( w / 3 );
+  int16_t ph      = ( int16_t ) ( h / 3 );
+  int16_t pr      = ( int16_t ) ( ( r > 1 ) ? r / 2 : 1 );
+  int16_t maxOffX = ( int16_t ) ( ( w - pw ) / 2 - 1 );
+  int16_t maxOffY = ( int16_t ) ( ( h - ph ) / 2 - 1 );
+  pupilOffsetX    = clampPupil ( pupilOffsetX, ( uint8_t ) maxOffX );
+  pupilOffsetY    = clampPupil ( pupilOffsetY, ( uint8_t ) maxOffY );
 
-  uint8_t px = ( uint8_t ) ( cx + pupilOffsetX - pw / 2 );
-  uint8_t py = ( uint8_t ) ( cy + pupilOffsetY - ph / 2 );
+  int16_t px = ( int16_t ) ( cx + pupilOffsetX - pw / 2 );
+  int16_t py = ( int16_t ) ( cy + pupilOffsetY - ph / 2 );
   Oled_FillRoundedRect ( buf, px, py, pw, ph, pr, false );
 }
 
-static void Oled_DrawBoxyEyeOutline ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t w, uint8_t h, uint8_t r, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
-  uint8_t ex = ( uint8_t ) ( cx - w / 2 );
-  uint8_t ey = ( uint8_t ) ( cy - h / 2 );
+static void Oled_DrawBoxyEyeOutline ( uint8_t *buf, int16_t cx, int16_t cy, int16_t w, int16_t h, int16_t r, int8_t pupilOffsetX, int8_t pupilOffsetY ) {
+  int16_t ex = ( int16_t ) ( cx - w / 2 );
+  int16_t ey = ( int16_t ) ( cy - h / 2 );
   Oled_DrawRoundedRect ( buf, ex, ey, w, h, r, true );
 
-  uint8_t pw      = ( uint8_t ) ( w / 3 );
-  uint8_t ph      = ( uint8_t ) ( h / 3 );
-  uint8_t pr      = ( uint8_t ) ( ( r > 1 ) ? r / 2 : 1 );
-  uint8_t maxOffX = ( uint8_t ) ( ( w - pw ) / 2 - 1 );
-  uint8_t maxOffY = ( uint8_t ) ( ( h - ph ) / 2 - 1 );
-  pupilOffsetX    = clampPupil ( pupilOffsetX, maxOffX );
-  pupilOffsetY    = clampPupil ( pupilOffsetY, maxOffY );
+  int16_t pw      = ( int16_t ) ( w / 3 );
+  int16_t ph      = ( int16_t ) ( h / 3 );
+  int16_t pr      = ( int16_t ) ( ( r > 1 ) ? r / 2 : 1 );
+  int16_t maxOffX = ( int16_t ) ( ( w - pw ) / 2 - 1 );
+  int16_t maxOffY = ( int16_t ) ( ( h - ph ) / 2 - 1 );
+  pupilOffsetX    = clampPupil ( pupilOffsetX, ( uint8_t ) maxOffX );
+  pupilOffsetY    = clampPupil ( pupilOffsetY, ( uint8_t ) maxOffY );
 
-  uint8_t px = ( uint8_t ) ( cx + pupilOffsetX - pw / 2 );
-  uint8_t py = ( uint8_t ) ( cy + pupilOffsetY - ph / 2 );
+  int16_t px = ( int16_t ) ( cx + pupilOffsetX - pw / 2 );
+  int16_t py = ( int16_t ) ( cy + pupilOffsetY - ph / 2 );
   Oled_FillRoundedRect ( buf, px, py, pw, ph, pr, true );
 }
 
-void Oled_DrawBoxyEye ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t w, uint8_t h, uint8_t r, int8_t pupilOffsetX, int8_t pupilOffsetY, bool filled ) {
+void Oled_DrawBoxyEye ( uint8_t *buf, int16_t cx, int16_t cy, int16_t w, int16_t h, int16_t r, int8_t pupilOffsetX, int8_t pupilOffsetY, bool filled ) {
   if ( filled )
     Oled_DrawBoxyEyeFilled ( buf, cx, cy, w, h, r, pupilOffsetX, pupilOffsetY );
   else
     Oled_DrawBoxyEyeOutline ( buf, cx, cy, w, h, r, pupilOffsetX, pupilOffsetY );
 }
 
-void Oled_DrawBoxyXEye ( uint8_t *buf, uint8_t cx, uint8_t cy, uint8_t w, uint8_t h, uint8_t r ) {
-  uint8_t ex = cx - w / 2;
-  uint8_t ey = cy - h / 2;
+void Oled_DrawBoxyXEye ( uint8_t *buf, int16_t cx, int16_t cy, int16_t w, int16_t h, int16_t r ) {
+  int16_t ex = cx - w / 2;
+  int16_t ey = cy - h / 2;
   Oled_DrawRoundedRect ( buf, ex, ey, w, h, r, true );
-  uint8_t margin = 4;
+  int16_t margin = 4;
   Oled_DrawLine ( buf, ex + margin, ey + margin, ex + w - margin, ey + h - margin, true );
   Oled_DrawLine ( buf, ex + w - margin, ey + margin, ex + margin, ey + h - margin, true );
 }

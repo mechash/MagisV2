@@ -101,7 +101,7 @@ void Oled_Print ( uint8_t col, uint8_t row, const char *text );
  * @param text The null-terminated string to be displayed.
  */
 
-void Oled_Text ( uint8_t x, uint8_t y, const char *text );
+void Oled_Text ( int16_t x, int16_t y, const char *text );
 
 /**
  * @brief Draws a signed integer number at a pixel position.
@@ -113,7 +113,7 @@ void Oled_Text ( uint8_t x, uint8_t y, const char *text );
  * @param number The 16-bit signed integer value to display.
  */
 
-void Oled_Number ( uint8_t x, uint8_t y, int16_t number );
+void Oled_Number ( int16_t x, int16_t y, int16_t number );
 
 /**
  * @brief Draws a single pixel on the screen.
@@ -122,7 +122,7 @@ void Oled_Number ( uint8_t x, uint8_t y, int16_t number );
  * @param y Y pixel coordinate (0–63).
  */
 
-void Oled_Pixel ( uint8_t x, uint8_t y );
+void Oled_Pixel ( int16_t x, int16_t y );
 
 /**
  * @brief Draws a line between two specified points.
@@ -133,7 +133,7 @@ void Oled_Pixel ( uint8_t x, uint8_t y );
  * @param y1 End Y coordinate (0–63).
  */
 
-void Oled_Line ( uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1 );
+void Oled_Line ( int16_t x0, int16_t y0, int16_t x1, int16_t y1 );
 
 /**
  * @brief Draws a filled rectangle.
@@ -144,7 +144,7 @@ void Oled_Line ( uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1 );
  * @param h Height of the rectangle in pixels.
  */
 
-void Oled_Rect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h );
+void Oled_Rect ( int16_t x, int16_t y, int16_t w, int16_t h );
 
 /**
  * @brief Draws a filled rectangle with rounded corners.
@@ -156,7 +156,7 @@ void Oled_Rect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h );
  * @param r Corner radius in pixels (0 for sharp, 6–10 recommended for smooth).
  */
 
-void Oled_RoundRect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r );
+void Oled_RoundRect ( int16_t x, int16_t y, int16_t w, int16_t h, int16_t r );
 
 /**
  * @brief Draws a filled circle.
@@ -166,7 +166,7 @@ void Oled_RoundRect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r );
  * @param r Radius of the circle in pixels.
  */
 
-void Oled_Circle ( uint8_t cx, uint8_t cy, uint8_t r );
+void Oled_Circle ( int16_t cx, int16_t cy, int16_t r );
 
 /**
  * @brief Draws the outline of a rectangle.
@@ -177,7 +177,7 @@ void Oled_Circle ( uint8_t cx, uint8_t cy, uint8_t r );
  * @param h Height in pixels.
  */
 
-void Oled_RectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h );
+void Oled_RectOutline ( int16_t x, int16_t y, int16_t w, int16_t h );
 
 /**
  * @brief Draws the outline of a rounded rectangle.
@@ -189,7 +189,7 @@ void Oled_RectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h );
  * @param r Corner radius in pixels.
  */
 
-void Oled_RoundRectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r );
+void Oled_RoundRectOutline ( int16_t x, int16_t y, int16_t w, int16_t h, int16_t r );
 
 /**
  * @brief Draws the outline of a circle.
@@ -199,7 +199,7 @@ void Oled_RoundRectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t
  * @param r Radius in pixels.
  */
 
-void Oled_CircleOutline ( uint8_t cx, uint8_t cy, uint8_t r );
+void Oled_CircleOutline ( int16_t cx, int16_t cy, int16_t r );
 
 /**
  * @brief Draws two robot-style boxy eyes centered on the screen.

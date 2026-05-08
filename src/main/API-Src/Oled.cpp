@@ -90,38 +90,38 @@ void Oled_Update ( void ) {
 }
 
 /* --- Simple text --- */
-void Oled_Text ( uint8_t x, uint8_t y, const char *text ) {
+void Oled_Text ( int16_t x, int16_t y, const char *text ) {
   Oled_DrawText ( oledSimpleBuffer, x, y, text );
 }
-void Oled_Number ( uint8_t x, uint8_t y, int16_t number ) {
+void Oled_Number ( int16_t x, int16_t y, int16_t number ) {
   Oled_DrawNumber ( oledSimpleBuffer, x, y, number );
 }
 
 /* --- Simple shapes (filled) --- */
-void Oled_Pixel ( uint8_t x, uint8_t y ) {
+void Oled_Pixel ( int16_t x, int16_t y ) {
   Oled_DrawPixel ( oledSimpleBuffer, x, y, true );
 }
-void Oled_Line ( uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1 ) {
+void Oled_Line ( int16_t x0, int16_t y0, int16_t x1, int16_t y1 ) {
   Oled_DrawLine ( oledSimpleBuffer, x0, y0, x1, y1, true );
 }
-void Oled_Rect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h ) {
+void Oled_Rect ( int16_t x, int16_t y, int16_t w, int16_t h ) {
   Oled_FillRect ( oledSimpleBuffer, x, y, w, h, true );
 }
-void Oled_RoundRect ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r ) {
+void Oled_RoundRect ( int16_t x, int16_t y, int16_t w, int16_t h, int16_t r ) {
   Oled_FillRoundedRect ( oledSimpleBuffer, x, y, w, h, r, true );
 }
-void Oled_Circle ( uint8_t cx, uint8_t cy, uint8_t r ) {
+void Oled_Circle ( int16_t cx, int16_t cy, int16_t r ) {
   Oled_FillCircle ( oledSimpleBuffer, cx, cy, r, true );
 }
 
 /* --- Simple outlines --- */
-void Oled_RectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h ) {
+void Oled_RectOutline ( int16_t x, int16_t y, int16_t w, int16_t h ) {
   Oled_DrawRect ( oledSimpleBuffer, x, y, w, h, true );
 }
-void Oled_RoundRectOutline ( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t r ) {
+void Oled_RoundRectOutline ( int16_t x, int16_t y, int16_t w, int16_t h, int16_t r ) {
   Oled_DrawRoundedRect ( oledSimpleBuffer, x, y, w, h, r, true );
 }
-void Oled_CircleOutline ( uint8_t cx, uint8_t cy, uint8_t r ) {
+void Oled_CircleOutline ( int16_t cx, int16_t cy, int16_t r ) {
   Oled_DrawCircle ( oledSimpleBuffer, cx, cy, r, true );
 }
 
@@ -151,6 +151,6 @@ void Oled_RollLine ( int16_t roll ) {
 }
 
 /* --- Erase --- */
-void Oled_Erase ( uint8_t x, uint8_t y, uint8_t w, uint8_t h ) {
+void Oled_Erase ( int16_t x, int16_t y, int16_t w, int16_t h ) {
   Oled_FillRect ( oledSimpleBuffer, x, y, w, h, false );
 }
