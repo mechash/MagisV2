@@ -11,7 +11,7 @@
  #  Created Date: Wed, 31st Dec 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Thu, 7th May 2026                                           #
+ #  Last Modified: Fri, 8th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
@@ -20,97 +20,96 @@
 OD	Added CRSF battery telemetry update in main loop           #
 *******************************************************************************/
 
-#include <math.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
 
 #include "platform.h"
 
+#include "common/maths.h"
 #include "common/axis.h"
 #include "common/color.h"
-#include "common/maths.h"
 #include "common/utils.h"
 
+#include "drivers/sensor.h"
 #include "drivers/accgyro.h"
 #include "drivers/compass.h"
 #include "drivers/light_led.h"
-#include "drivers/sensor.h"
 
-#include "drivers/flash.h"
-#include "drivers/flash_m25p16.h"
 #include "drivers/gpio.h"
+#include "drivers/system.h"
 #include "drivers/pwm_output.h"
+#include "drivers/serial.h"
+#include "drivers/timer.h"
 #include "drivers/pwm_rx.h"
+#include "drivers/flash_m25p16.h"
+#include "drivers/flash.h"
 #include "drivers/ranging_vl53l0x.h"
 #include "drivers/ranging_vl53l1x.h"
-#include "drivers/serial.h"
-#include "drivers/system.h"
-#include "drivers/timer.h"
+#include "sensors/sensors.h"
+#include "sensors/boardalignment.h"
+#include "sensors/sonar.h"
+#include "sensors/compass.h"
 #include "sensors/acceleration.h"
 #include "sensors/barometer.h"
-#include "sensors/battery.h"
-#include "sensors/boardalignment.h"
-#include "sensors/compass.h"
 #include "sensors/gyro.h"
-#include "sensors/sensors.h"
-#include "sensors/sonar.h"
+#include "sensors/battery.h"
 
 #include "io/beeper.h"
 #include "io/display.h"
 #include "io/escservo.h"
-#include "io/flashfs.h"
+#include "io/rc_controls.h"
+#include "io/rc_curves.h"
 #include "io/gimbal.h"
 #include "io/gps.h"
 #include "io/ledstrip.h"
-#include "io/oled_display.h"
-#include "io/rc_controls.h"
-#include "io/rc_curves.h"
 #include "io/serial.h"
 #include "io/serial_cli.h"
 #include "io/serial_msp.h"
 #include "io/statusindicator.h"
+#include "io/flashfs.h"
+#include "io/oled_display.h"
 
-#include "rx/crsf.h"
-#include "rx/msp.h"
 #include "rx/rx.h"
+#include "rx/msp.h"
+#include "rx/crsf.h"
 
-#include "blackbox/blackbox.h"
 #include "telemetry/telemetry.h"
+#include "blackbox/blackbox.h"
 
-#include "flight/acrobats.h"
+#include "flight/mixer.h"
+#include "flight/pid.h"
+#include "flight/imu.h"
 #include "flight/altitudehold.h"
 #include "flight/failsafe.h"
-#include "flight/filter.h"
 #include "flight/gtune.h"
-#include "flight/imu.h"
-#include "flight/mixer.h"
 #include "flight/navigation.h"
-#include "flight/opticflow.h"
-#include "flight/pid.h"
-#include "flight/posControl.h"
+#include "flight/filter.h"
+#include "flight/acrobats.h"
 #include "flight/posEstimate.h"
-
+#include "flight/posControl.h"
+#include "flight/opticflow.h"
 #ifdef PRIMUSX2
   #include "flight/motor.h"
 #endif
-#include "config/config.h"
-#include "config/config_master.h"
-#include "config/config_profile.h"
 #include "config/runtime_config.h"
+#include "config/config.h"
+#include "config/config_profile.h"
+#include "config/config_master.h"
 
 #include "mw.h"
 
 #include "API/API-Utils.h"
+#include "API/Scheduler-Timer.h"
+#include "API/RC-Interface.h"
 #include "API/FC-Control.h"
 #include "API/FC-Data.h"
-#include "API/Localisation.h"
 #include "API/Motor.h"
-#include "API/RC-Interface.h"
-#include "API/RxConfig.h"
-#include "API/Scheduler-Timer.h"
-#include "API/XRanging.h"
 #include "PlutoPilot.h"
+#include "API/XRanging.h"
+#include "API/Localisation.h"
+#include "API/RxConfig.h"
 #include "command/command.h"
 #include "command/localisationCommand.h"
 #include "drivers/opticflow_paw3903.h"
