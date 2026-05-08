@@ -8,7 +8,7 @@
  #  Created Date: Sat, 25th Jan 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Tue, 5th May 2026                                           #
+ #  Last Modified: Fri, 8th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
@@ -393,7 +393,7 @@ bool Oled_IsSystemMode ( void ) {
  * @brief Clear OLED display.
  */
 void Oled_display_Clear ( void ) {
-  if ( ! OledEnable ) return;
+  // if ( ! OledEnable ) return;
   if ( ARMING_FLAG ( ARMED ) ) return;
 
   i2c_OLED_clear_display_quick ( );
@@ -403,7 +403,7 @@ void Oled_display_Clear ( void ) {
  * @brief Push framebuffer changes to OLED hardware.
  */
 void Oled_display_Update ( uint8_t *buf ) {
-  if ( ! OledEnable ) return;
+  // if ( ! OledEnable ) return;
   if ( oledMode != OLED_MODE_USER ) return;
   if ( ! buf ) return;
 
@@ -414,7 +414,7 @@ void Oled_display_Update ( uint8_t *buf ) {
  * @brief Print text using OLED text-grid (SYSTEM mode only).
  */
 void Oled_Print ( uint8_t col, uint8_t row, const char *text ) {
-  if ( ! OledEnable ) return;
+  // if ( ! OledEnable ) return;
   if ( oledMode != OLED_MODE_SYSTEM ) return;
   if ( ! text ) return;
 

@@ -11,7 +11,7 @@
  #  Created Date: Thu, 18th Dec 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Tue, 5th May 2026                                           #
+ #  Last Modified: Fri, 8th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
@@ -82,7 +82,7 @@ bool Oled_Is_Mode ( Oled_mode_e mode ) {
 
 void Oled_Clear ( void ) {
   memset ( oledSimpleBuffer, 0, sizeof ( oledSimpleBuffer ) );
-  Oled_display_Clear ( );
+  // Oled_display_Clear ( );
 }
 
 void Oled_Update ( void ) {

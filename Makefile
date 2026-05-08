@@ -28,9 +28,9 @@ TARGET	?=
 BUILD_TYPE	?= BIN
 PROJECT ?= DEFAULT
 LIB_MAJOR_VERSION	=	1
-LIB_MINOR_VERSION	=	2
-FW_Version	=	3.2.0
-API_Version	=	1.2.0
+LIB_MINOR_VERSION	=	3
+FW_Version	=	3.2.1
+API_Version	=	1.2.1
 # Flash size (KB).  Some low-end chips actually have more flash than advertised, use this to override.
 FLASH_SIZE	?=
 RAM_SIZE 	?=
