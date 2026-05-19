@@ -11,7 +11,7 @@
  #  Created Date: Sat, 22nd Feb 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Sat, 31st Jan 2026                                          #
+ #  Last Modified: Fri, 8th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
@@ -35,6 +35,7 @@
 #include "src/main/API/Debugging.h"
 #include "src/main/API/Serial-IO.h"
 #include "src/main/API/XRanging.h"
+#include "src/main/API/Oled.h"
 
 void plutoRxConfig ( void );
 

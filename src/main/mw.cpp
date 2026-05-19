@@ -11,12 +11,13 @@
  #  Created Date: Wed, 31st Dec 2025                                           #
  #  Brief:                                                                     #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
- #  Last Modified: Sun, 1st Feb 2026                                           #
+ #  Last Modified: Fri, 8th May 2026                                           #
  #  Modified By: AJ                                                            #
  #  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
  #  HISTORY:                                                                   #
- #  Date      	By	Comments                                                   #
- #  ----------	---	---------------------------------------------------------  #
+ #  Date      	By	Comments # #  ----------	---
+---------------------------------------------------------  # #  2026-04-10
+OD	Added CRSF battery telemetry update in main loop           #
 *******************************************************************************/
 
 #include <stdbool.h>
@@ -72,6 +73,7 @@
 
 #include "rx/rx.h"
 #include "rx/msp.h"
+#include "rx/crsf.h"
 
 #include "telemetry/telemetry.h"
 #include "blackbox/blackbox.h"
@@ -103,7 +105,6 @@
 #include "API/RC-Interface.h"
 #include "API/FC-Control.h"
 #include "API/FC-Data.h"
-#include "API/Specifiers.h"
 #include "API/Motor.h"
 #include "PlutoPilot.h"
 #include "API/XRanging.h"
@@ -128,8 +129,9 @@ extern uint8_t PIDweight [ 3 ];
 
 int16_t magHold;
 int16_t headFreeModeHold = 83;
-int16_t telemTemperature1;      // gyro sensor temperature
-uint16_t cycleTime      = 0;    // this is the number in micro second to achieve a full loop, it can differ a little and is taken into account in the PID loop
+int16_t telemTemperature1;    // gyro sensor temperature
+uint16_t cycleTime = 0;       // this is the number in micro second to achieve a full loop, it can
+                              // differ a little and is taken into account in the PID loop
 int16_t stateHandler    = 0;
 int16_t startEstimation = 0;
 
@@ -144,7 +146,9 @@ uint32_t current_time   = 0;
 uint32_t total_time     = 0;
 uint32_t previous_time  = 0;
 uint32_t mode_checker   = 0;
-static uint32_t disarmAt;    // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
+static uint32_t
+          disarmAt;    // Time of automatic disarm when "Don't spin the motors when
+                       // armed" is enabled and auto_disarm_delay is nonzero
 
 uint32_t userCurrentTime = 0;
 uint32_t userLoopTime    = 0;
@@ -167,11 +171,9 @@ bool isBlackboxOn = false;
 
 bool TakeOffFlag = false;
 
-enum {
-  ALIGN_GYRO  = 0,
-  ALIGN_ACCEL = 1,
-  ALIGN_MAG   = 2
-};
+enum { ALIGN_GYRO  = 0,
+       ALIGN_ACCEL = 1,
+       ALIGN_MAG   = 2 };
 
 // Interval crashTimer;
 
@@ -179,7 +181,12 @@ Interval dataLog;    // Timer for controlling logging interval
 
 int16_t myRC [ 8 ] = { 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500 };
 
-typedef void ( *pidControllerFuncPtr ) ( pidProfile_t *pidProfile, controlRateConfig_t *controlRateConfig, uint16_t max_angle_inclination, rollAndPitchTrims_t *angleTrim, rxConfig_t *rxConfig );    // pid controller function prototype
+typedef void ( *pidControllerFuncPtr ) (
+          pidProfile_t *pidProfile,
+          controlRateConfig_t *controlRateConfig,
+          uint16_t max_angle_inclination,
+          rollAndPitchTrims_t *angleTrim,
+          rxConfig_t *rxConfig );    // pid controller function prototype
 
 extern pidControllerFuncPtr pid_controller;
 
@@ -196,7 +203,8 @@ uint32_t Uwbtime;
 #ifdef UWB
 void uwbUpdate ( ) {
 
-  if ( GPIO.read ( Pin8 ) ) {    // When UWB TAG gets new data GPIO 8 on UNIBUS gets HIGH: works as a ready flag
+  if ( GPIO.read ( Pin8 ) ) {    // When UWB TAG gets new data GPIO 8 on UNIBUS gets
+                                 // HIGH: works as a ready flag
 
     LED_B_TOGGLE;    // Toggling green LED for data received indication
 
@@ -217,7 +225,8 @@ void uwbUpdate ( ) {
               posZ    = ( int16_t ) ( ( ( int32_t ) Uart_read32 ( UART2 ) ) / 10 );
               Quality = ( int8_t ) ( ( int32_t ) Uart_Read8 ( UART2 ) );
 
-              if ( Quality > 51 )    // only if quality is greater than 50% take as a new position
+              if ( Quality > 51 )    // only if quality is greater than 50% take as a
+                                     // new position
                 new_position = true;
             }
           }
@@ -229,7 +238,8 @@ void uwbUpdate ( ) {
 
 #endif
 
-void applyAndSaveAccelerometerTrimsDelta ( rollAndPitchTrims_t *rollAndPitchTrimsDelta ) {
+void applyAndSaveAccelerometerTrimsDelta (
+          rollAndPitchTrims_t *rollAndPitchTrimsDelta ) {
   currentProfile->accelerometerTrims.values.roll += rollAndPitchTrimsDelta->values.roll;
   currentProfile->accelerometerTrims.values.pitch += rollAndPitchTrimsDelta->values.pitch;
   saveConfigAndNotify ( );
@@ -267,11 +277,18 @@ bool isCalibrating ( ) {
       }
   #endif
   */
-  // Note: compass calibration is handled completely differently, outside of the main loop, see f.CALIBRATE_MAG
+  // Note: compass calibration is handled completely differently, outside of the
+  // main loop, see f.CALIBRATE_MAG
 #ifdef MAG_ENFORCE
   // to check whether mag calibration is done, if not the don't arm
-  if ( masterConfig.magScale.raw [ 0 ] == 0 || masterConfig.magScale.raw [ 1 ] == 0 || masterConfig.magScale.raw [ 2 ] == 0 || !isMagCalibrated ) {
-    set_FSI ( Mag_Calibration );
+  // ELRS (CRSF): skip mag enforce — mag cal is optional, triggered via AUX3
+  // switch
+  if ( masterConfig.rxConfig.serialrx_provider != SERIALRX_CRSF ) {
+    if ( masterConfig.magScale.raw [ 0 ] == 0 || masterConfig.magScale.raw [ 1 ] == 0 || masterConfig.magScale.raw [ 2 ] == 0 || ! isMagCalibrated ) {
+      set_FSI ( Mag_Calibration );
+    } else {
+      reset_FSI ( Mag_Calibration );
+    }
   } else {
     reset_FSI ( Mag_Calibration );
   }
@@ -336,12 +353,14 @@ void annexCode ( void ) {
       rcCommand [ axis ] = ( lookupYawRC [ tmp2 ] + ( tmp - tmp2 * 100 ) * ( lookupYawRC [ tmp2 + 1 ] - lookupYawRC [ tmp2 ] ) / 100 ) * -masterConfig.yaw_control_direction;
       prop1              = 100 - ( uint16_t ) currentControlRateProfile->rates [ axis ] * ABS ( tmp ) / 500;
     }
-    // FIXME axis indexes into pids.  use something like lookupPidIndex(rc_alias_e alias) to reduce coupling.
+    // FIXME axis indexes into pids.  use something like
+    // lookupPidIndex(rc_alias_e alias) to reduce coupling.
     dynP8 [ axis ] = ( uint16_t ) currentProfile->pidProfile.P8 [ axis ] * prop1 / 100;
     dynI8 [ axis ] = ( uint16_t ) currentProfile->pidProfile.I8 [ axis ] * prop1 / 100;
     dynD8 [ axis ] = ( uint16_t ) currentProfile->pidProfile.D8 [ axis ] * prop1 / 100;
 
-    // non coupled PID reduction scaler used in PID controller 1 and PID controller 2. YAW TPA disabled. 100 means 100% of the pids
+    // non coupled PID reduction scaler used in PID controller 1 and PID
+    // controller 2. YAW TPA disabled. 100 means 100% of the pids
     if ( axis == YAW ) {
       PIDweight [ axis ] = 100;
     } else {
@@ -403,20 +422,29 @@ void annexCode ( void ) {
   }
 
   if ( feature ( FEATURE_INA219_CBAT ) ) {
-    // int32_t ibatTimeSinceLastServiced = cmp32 ( currentTime, ibatLastServiced );
+    // int32_t ibatTimeSinceLastServiced = cmp32 ( currentTime, ibatLastServiced
+    // );
 
     if ( cmp32 ( currentTime, ibatLastServiced ) >= IBATINTERVAL ) {
       ibatLastServiced = currentTime;
-      // updateCurrentMeter ( ibatTimeSinceLastServiced, &masterConfig.rxConfig, masterConfig.flight3DConfig.deadband3d_throttle );
+      // updateCurrentMeter ( ibatTimeSinceLastServiced, &masterConfig.rxConfig,
+      // masterConfig.flight3DConfig.deadband3d_throttle );
       updateINA219Current ( currentTime, ARMING_FLAG ( ARMED ) );
     }
   }
 
   if ( cmp32 ( currentTime, BMS_UpdateInterval ) >= BMS_UpdateInterval ) {
-    // uint16_t vbatComp = computeVbatComp_mV ( currentTime, vbatLastServiced, ibatLastServiced, ARMING_FLAG ( ARMED ), rcData [ THROTTLE ] /* your 1000..2000 */ );
-    // updateBatteryState ( vbatComp );
+    // uint16_t vbatComp = computeVbatComp_mV ( currentTime, vbatLastServiced,
+    // ibatLastServiced, ARMING_FLAG ( ARMED ), rcData [ THROTTLE ] /* your
+    // 1000..2000 */ ); updateBatteryState ( vbatComp );
 
     BMS_Update ( currentTime, vbatLastServiced, ibatLastServiced, ARMING_FLAG ( ARMED ), rcData [ THROTTLE ] );
+  }
+
+  /* Update battery telemetry for CRSF (TX happens safely after each RC frame)
+   */
+  if ( feature ( FEATURE_RX_SERIAL ) && feature ( FEATURE_INA219_VBAT ) ) {
+    crsfSetBatteryTelemetry ( vBatRaw, mAmpRaw / 10, ( uint32_t ) mAhDrawn, ( uint8_t ) soc_Fused );
   }
 
   beeperUpdate ( );    // call periodic beeper handler
@@ -485,7 +513,8 @@ void annexCode ( void ) {
   }
 #endif
 
-  // Read out gyro temperature. can use it for something somewhere. maybe get MCU temperature instead? lots of fun possibilities.
+  // Read out gyro temperature. can use it for something somewhere. maybe get
+  // MCU temperature instead? lots of fun possibilities.
   if ( gyro.temperature )
     gyro.temperature ( &telemTemperature1 );
 
@@ -536,7 +565,8 @@ void mwDisarm ( void ) {
   resetPosController ( );
 }
 
-#define TELEMETRY_FUNCTION_MASK ( FUNCTION_TELEMETRY_FRSKY | FUNCTION_TELEMETRY_HOTT | FUNCTION_TELEMETRY_MSP | FUNCTION_TELEMETRY_SMARTPORT )
+#define TELEMETRY_FUNCTION_MASK \
+  ( FUNCTION_TELEMETRY_FRSKY | FUNCTION_TELEMETRY_HOTT | FUNCTION_TELEMETRY_MSP | FUNCTION_TELEMETRY_SMARTPORT )
 
 void releaseSharedTelemetryPorts ( void ) {
   serialPort_t *sharedPort = findSharedSerialPort ( TELEMETRY_FUNCTION_MASK, FUNCTION_MSP );
@@ -581,7 +611,8 @@ void mwArm ( void ) {
         startBlackbox ( );
       }
 #endif
-      disarmAt = millis ( ) + masterConfig.auto_disarm_delay * 1000;    // start disarm timeout, will be extended when throttle is nonzero
+      disarmAt = millis ( ) + masterConfig.auto_disarm_delay * 1000;    // start disarm timeout, will be extended
+                                                                        // when throttle is nonzero
 
       // beep to indicate arming
 #ifdef GPS
@@ -625,11 +656,14 @@ void handleInflightCalibrationStickPosition ( void ) {
 }
 
 void updateInflightCalibrationState ( void ) {
-  if ( AccInflightCalibrationArmed && ARMING_FLAG ( ARMED ) && rcData [ THROTTLE ] > masterConfig.rxConfig.mincheck && ! IS_RC_MODE_ACTIVE ( BOXARM ) ) {    // Copter is airborne and you are turning it off via boxarm : start measurement
+  if ( AccInflightCalibrationArmed && ARMING_FLAG ( ARMED ) && rcData [ THROTTLE ] > masterConfig.rxConfig.mincheck && ! IS_RC_MODE_ACTIVE ( BOXARM ) ) {    // Copter is airborne and you are turning it
+                                                                                                                                                             // off via boxarm : start measurement
     InflightcalibratingA        = 50;
     AccInflightCalibrationArmed = false;
   }
-  if ( IS_RC_MODE_ACTIVE ( BOXCALIB ) ) {    // Use the Calib Option to activate : Calib = TRUE Meausrement started, Land and Calib = 0 measurement stored
+  if ( IS_RC_MODE_ACTIVE ( BOXCALIB ) ) {    // Use the Calib Option to activate : Calib
+                                             // = TRUE Meausrement started, Land and
+                                             // Calib = 0 measurement stored
     if ( ! AccInflightCalibrationActive && ! AccInflightCalibrationMeasurementDone )
       InflightcalibratingA = 50;
     AccInflightCalibrationActive = true;
@@ -816,7 +850,8 @@ void processRx ( void ) {
     failsafeUpdateState ( );
   }
 
-  throttleStatus_e throttleStatus = calculateThrottleStatus ( &masterConfig.rxConfig, masterConfig.flight3DConfig.deadband3d_throttle );
+  throttleStatus_e throttleStatus = calculateThrottleStatus (
+            &masterConfig.rxConfig, masterConfig.flight3DConfig.deadband3d_throttle );
 
   if ( throttleStatus == THROTTLE_LOW ) {
     pidResetErrorAngle ( );
@@ -962,7 +997,8 @@ void processRx ( void ) {
       releaseSharedTelemetryPorts ( );
 
     } else {
-      // the telemetry state must be checked immediately so that shared serial ports are released.
+      // the telemetry state must be checked immediately so that shared serial
+      // ports are released.
       telemetryCheckState ( );
       mspAllocateSerialPorts ( &masterConfig.serialConfig );
     }
@@ -1076,7 +1112,8 @@ void userCode ( ) {
 void loop ( void ) {
 
   // if ( IS_RC_MODE_ACTIVE ( BOXARM ) ) {
-  //   motor_disarmed [ 0 ] = motor_disarmed [ 1 ] = motor_disarmed [ 2 ] = motor_disarmed [ 3 ] = 1800;
+  //   motor_disarmed [ 0 ] = motor_disarmed [ 1 ] = motor_disarmed [ 2 ] =
+  //   motor_disarmed [ 3 ] = 1800;
   // }
 #ifdef PRIMUSX2
   MotroWakeUp ( );
@@ -1104,7 +1141,8 @@ void loop ( void ) {
     isRXDataNew = true;
 
 #ifdef BARO
-    // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid rcCommand data.
+    // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid
+    // rcCommand data.
     if ( haveProcessedAnnexCodeOnce ) {
       if ( sensors ( SENSOR_BARO ) ) {
         updateAltHoldState ( );
@@ -1113,7 +1151,8 @@ void loop ( void ) {
 #endif
 
 #ifdef SONAR
-    // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid rcCommand data.
+    // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid
+    // rcCommand data.
     if ( haveProcessedAnnexCodeOnce ) {
       if ( sensors ( SENSOR_SONAR ) ) {
         updateSonarAltHoldState ( );
@@ -1126,9 +1165,10 @@ void loop ( void ) {
 
     executePeriodicTasks ( );
 
-    // if GPS feature is enabled, gpsThread() will be called at some intervals to check for stuck
-    // hardware, wrong baud rates, init GPS if needed, etc. Don't use SENSOR_GPS here as gpsThread() can and will
-    // change this based on available hardware
+    // if GPS feature is enabled, gpsThread() will be called at some intervals
+    // to check for stuck hardware, wrong baud rates, init GPS if needed, etc.
+    // Don't use SENSOR_GPS here as gpsThread() can and will change this based
+    // on available hardware
 #ifdef GPS
     if ( feature ( FEATURE_GPS ) ) {
       gpsThread ( );
@@ -1220,7 +1260,8 @@ void loop ( void ) {
     // If we're armed, at minimum throttle, and we do arming via the
     // sticks, do not process yaw input from the rx.  We do this so the
     // motors do not spin up while we are trying to arm or disarm.
-    // Allow yaw control for tricopters if the user wants the servo to move even when unarmed.
+    // Allow yaw control for tricopters if the user wants the servo to move even
+    // when unarmed.
     if ( isUsingSticksForArming ( ) && rcData [ THROTTLE ] <= masterConfig.rxConfig.mincheck
 #ifndef USE_QUAD_MIXER_ONLY
          && ! ( ( masterConfig.mixerMode == MIXER_TRI || masterConfig.mixerMode == MIXER_CUSTOM_TRI ) && masterConfig.mixerConfig.tri_unarmed_servo ) && masterConfig.mixerMode != MIXER_AIRPLANE && masterConfig.mixerMode != MIXER_FLYING_WING
@@ -1230,7 +1271,8 @@ void loop ( void ) {
     }
 
     if ( currentProfile->throttle_correction_value && ( FLIGHT_MODE ( ANGLE_MODE ) || FLIGHT_MODE ( HORIZON_MODE ) ) ) {
-      rcCommand [ THROTTLE ] += calculateThrottleAngleCorrection ( currentProfile->throttle_correction_value );
+      rcCommand [ THROTTLE ] += calculateThrottleAngleCorrection (
+                currentProfile->throttle_correction_value );
     }
 
 #ifdef GPS
@@ -1263,10 +1305,9 @@ void loop ( void ) {
 
     /*
      #ifdef BAROO
-     // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid rcCommand data.
-     if (haveProcessedAnnexCodeOnce) {
-     if (sensors(SENSOR_BARO)) {
-     updateAltHoldState();
+     // the 'annexCode' initialses rcCommand, updateAltHoldState depends on
+     valid rcCommand data. if (haveProcessedAnnexCodeOnce) { if
+     (sensors(SENSOR_BARO)) { updateAltHoldState();
      }
      }
      #endif
